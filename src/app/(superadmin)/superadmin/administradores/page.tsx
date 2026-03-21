@@ -1,5 +1,5 @@
 import { getAllAdmins } from '@/modules/auth/admin-actions'
-import { toggleAdminStatus, deleteAdmin } from '@/modules/auth/admin-actions'
+import { toggleAdminStatus, deleteAdmin, resetDeviceBinding } from '@/modules/auth/admin-actions'
 import Link from 'next/link'
 
 const countryFlags: Record<string, string> = {
@@ -81,35 +81,48 @@ export default async function AdministradoresPage() {
                     {admin.status === 'active' ? 'Activo' : 'Bloqueado'}
                   </span>
 
-                  <div className="flex items-center gap-2">
-                    <form action={async () => {
-                      'use server'
-                      await toggleAdminStatus(admin.id, admin.status)
-                    }}>
-                      <button
-                        type="submit"
-                        className={`text-xs px-3 py-1.5 rounded-lg border transition ${
-                          admin.status === 'active'
-                            ? 'bg-red-600/20 hover:bg-red-600/30 text-red-400 border-red-500/20'
-                            : 'bg-green-600/20 hover:bg-green-600/30 text-green-400 border-green-500/20'
-                        }`}
-                      >
-                        {admin.status === 'active' ? 'Bloquear' : 'Activar'}
-                      </button>
-                    </form>
+                <div className="flex items-center gap-2">
+  <form action={async () => {
+    'use server'
+    await toggleAdminStatus(admin.id, admin.status)
+  }}>
+    <button
+      type="submit"
+      className={`text-xs px-3 py-1.5 rounded-lg border transition ${
+        admin.status === 'active'
+          ? 'bg-red-600/20 hover:bg-red-600/30 text-red-400 border-red-500/20'
+          : 'bg-green-600/20 hover:bg-green-600/30 text-green-400 border-green-500/20'
+      }`}
+    >
+      {admin.status === 'active' ? 'Bloquear' : 'Activar'}
+    </button>
+  </form>
 
-                    <form action={async () => {
-                      'use server'
-                      await deleteAdmin(admin.id)
-                    }}>
-                      <button
-                        type="submit"
-                        className="text-xs bg-red-600/20 hover:bg-red-600/30 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 transition"
-                      >
-                        Eliminar
-                      </button>
-                    </form>
-                  </div>
+  <form action={async () => {
+    'use server'
+    await resetDeviceBinding(admin.id)
+  }}>
+    <button
+      type="submit"
+      className="text-xs bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-400 px-3 py-1.5 rounded-lg border border-yellow-500/20 transition"
+      title="Permite iniciar sesión desde un nuevo dispositivo"
+    >
+      📱 Resetear dispositivo
+    </button>
+  </form>
+
+  <form action={async () => {
+    'use server'
+    await deleteAdmin(admin.id)
+  }}>
+    <button
+      type="submit"
+      className="text-xs bg-red-600/20 hover:bg-red-600/30 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 transition"
+    >
+      Eliminar
+    </button>
+  </form>
+</div>
                 </div>
               </div>
             ))}

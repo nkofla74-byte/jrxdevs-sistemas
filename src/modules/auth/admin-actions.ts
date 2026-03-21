@@ -123,3 +123,30 @@ export async function deleteAdmin(userId: string) {
   revalidatePath('/superadmin/administradores')
   return { success: true }
 }
+
+// =============================================
+// RESETEAR DEVICE BINDING
+// =============================================
+export async function resetDeviceBinding(userId: string) {
+  const supabase = createClient()
+
+  const { error } = await supabase
+    .from('users')
+    .update({ device_id: null })
+    .eq('id', userId)
+
+  if (error) return { error: 'Error al resetear el dispositivo.' }
+
+  // Audit log
+  const { data: { user } } = await supabase.auth.getUser()
+  await supabase.from('audit_logs').insert({
+    user_id: user?.id,
+    role: 'superadmin',
+    action: 'DEVICE_RESETEADO',
+    entity: 'users',
+    entity_id: userId,
+  })
+
+  revalidatePath('/superadmin/administradores')
+  return { success: true }
+}

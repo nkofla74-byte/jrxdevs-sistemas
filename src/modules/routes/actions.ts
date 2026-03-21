@@ -267,3 +267,28 @@ export async function regenerateRoutePassword(routeId: string) {
   revalidatePath(`/superadmin/rutas/${routeId}`)
   return { success: true, newPassword }
 }
+
+// =============================================
+// RESETEAR DEVICE BINDING DE RUTA
+// =============================================
+export async function resetRouteDevice(routeId: string) {
+  const supabase = createClient()
+
+  const { data: route } = await supabase
+    .from('routes')
+    .select('cobrador_id')
+    .eq('id', routeId)
+    .single()
+
+  if (!route?.cobrador_id) return { error: 'Sin cobrador asignado.' }
+
+  const { error } = await supabase
+    .from('users')
+    .update({ device_id: null })
+    .eq('id', route.cobrador_id)
+
+  if (error) return { error: 'Error al resetear el dispositivo.' }
+
+  revalidatePath(`/superadmin/rutas/${routeId}`)
+  return { success: true }
+}

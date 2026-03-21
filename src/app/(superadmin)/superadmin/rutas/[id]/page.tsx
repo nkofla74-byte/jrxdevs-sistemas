@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { toggleRouteStatus, deleteRoute, regenerateRoutePassword } from '@/modules/routes/actions'
+import { toggleRouteStatus, deleteRoute, regenerateRoutePassword, resetRouteDevice } from '@/modules/routes/actions'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -104,21 +104,17 @@ export default async function RutaDetailPage({
         {/* Acciones */}
         <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
           <h2 className="text-lg font-semibold mb-4">Acciones</h2>
-          <div className="flex gap-3">
-            <form action={async () => {
-              'use server'
-              await toggleRouteStatus(route.id, route.status)
-            }}>
-              <button
-                type="submit"
-                className={`text-sm px-4 py-2 rounded-xl border transition ${
-                  route.status === 'active'
-                    ? 'bg-gray-600/20 hover:bg-gray-600/30 text-gray-400 border-gray-500/20'
-                    : 'bg-green-600/20 hover:bg-green-600/30 text-green-400 border-green-500/20'
-                }`}
-              >
-                {route.status === 'active' ? 'Desactivar ruta' : 'Activar ruta'}
-              </button>
+        <form action={async () => {
+  'use server'
+  await resetRouteDevice(route.id)
+}}>
+  <button
+    type="submit"
+    className="text-sm bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-xl border border-yellow-500/20 transition"
+  >
+    📱 Resetear dispositivo
+  </button>
+</form>
             </form>
 
             <form action={async () => {
