@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCapitalMovements } from '@/modules/capital/actions'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
+import PageHeader from '@/components/shared/PageHeader'
 import CapitalForm from '@/components/shared/CapitalForm'
 
 const typeLabels: Record<string, string> = {
@@ -12,20 +12,17 @@ const typeLabels: Record<string, string> = {
 }
 
 const typeColors: Record<string, string> = {
-  INJECTION: 'text-green-400',
-  WITHDRAWAL: 'text-red-400',
-  TRANSFER: 'text-blue-400',
-  REINFORCEMENT: 'text-yellow-400',
+  INJECTION: 'var(--success)',
+  WITHDRAWAL: 'var(--danger)',
+  TRANSFER: 'var(--info)',
+  REINFORCEMENT: 'var(--warning)',
 }
 
 function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit', month: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  }).format(new Date(dateString))
 }
 
 export default async function CapitalPage({
@@ -48,7 +45,6 @@ export default async function CapitalPage({
 
   const tenantId = userData.tenant_id
 
-  // Obtener rutas
   const { data: routes } = await supabase
     .from('routes')
     .select('id, name, capital_injected, status')
@@ -57,96 +53,129 @@ export default async function CapitalPage({
     .is('deleted_at', null)
     .order('name', { ascending: true })
 
-  // Obtener movimientos
   const { data: movements } = await getCapitalMovements(tenantId, searchParams.ruta)
 
-  // Total capital global
   const totalCapital = routes?.reduce((sum, r) => sum + Number(r.capital_injected), 0) ?? 0
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
 
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center gap-3">
-          <Link href="/admin" className="text-gray-400 hover:text-white transition text-sm">
-            ← Dashboard
-          </Link>
-          <span className="text-gray-600">/</span>
-          <span className="text-white font-semibold">Capital</span>
-        </div>
-      </header>
+      <PageHeader
+        title="Capital"
+        backHref="/admin"
+        backLabel="← Inicio"
+      />
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 16px' }}>
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Gestión de capital</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Capital total en circulación: <span className="text-white font-semibold">{totalCapital.toLocaleString()}</span>
+        <div style={{ marginBottom: 20 }}>
+          <h1 style={{
+            fontFamily: 'Syne', fontWeight: 800, fontSize: 24,
+            color: 'var(--text-primary)', marginBottom: 4,
+          }}>Gestión de capital</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+            Total en circulación:{' '}
+            <span style={{ color: 'var(--neon-bright)', fontWeight: 700 }}>
+              {totalCapital.toLocaleString('es-CO')}
+            </span>
           </p>
         </div>
 
         {/* Capital por ruta */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: 10, marginBottom: 20,
+        }}>
           {routes?.map((route) => (
-            <div key={route.id} className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-white">{route.name}</p>
-                <span className="text-xs text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
-                  Activa
-                </span>
-              </div>
-              <p className="text-3xl font-bold text-indigo-400">
-                {Number(route.capital_injected).toLocaleString()}
+            <div key={route.id} style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 16, padding: 14,
+            }}>
+              <p style={{
+                fontWeight: 600, fontSize: 13,
+                color: 'var(--text-primary)', marginBottom: 6,
+                whiteSpace: 'nowrap', overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}>
+                {route.name}
               </p>
-              <p className="text-gray-500 text-xs mt-1">Capital inyectado</p>
+              <p style={{
+                fontFamily: 'DM Mono', fontWeight: 700,
+                fontSize: 18, color: 'var(--neon-bright)',
+              }}>
+                {Number(route.capital_injected).toLocaleString('es-CO')}
+              </p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 2 }}>
+                Capital inyectado
+              </p>
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Formulario */}
+        <CapitalForm routes={routes ?? []} />
 
-          {/* Formulario de movimientos */}
-          <CapitalForm routes={routes ?? []} />
+        {/* Historial */}
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 20, padding: 20, marginTop: 16,
+        }}>
+          <h2 style={{
+            fontFamily: 'Syne', fontWeight: 700, fontSize: 16,
+            color: 'var(--text-primary)', marginBottom: 16,
+          }}>
+            Historial de movimientos
+          </h2>
 
-          {/* Historial de movimientos */}
-          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-            <h2 className="text-lg font-semibold mb-4">
-              Historial de movimientos
-            </h2>
-
-            {movements && movements.length > 0 ? (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {movements.map((mov: any) => (
-                  <div
-                    key={mov.id}
-                    className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3"
-                  >
-                    <div>
-                      <p className={`font-semibold text-sm ${typeColors[mov.type]}`}>
-                        {typeLabels[mov.type]}
-                      </p>
-                      <p className="text-gray-500 text-xs">
-                        {mov.route?.name}
-                        {mov.notes ? ` · ${mov.notes}` : ''}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-white font-semibold text-sm">
-                        {Number(mov.amount).toLocaleString()}
-                      </p>
-                      <p className="text-gray-500 text-xs">
-                        {formatDate(mov.created_at)}
-                      </p>
-                    </div>
+          {movements && movements.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 400, overflowY: 'auto' }}>
+              {movements.map((mov: any) => (
+                <div key={mov.id} style={{
+                  background: 'var(--bg-secondary)',
+                  borderRadius: 14, padding: '12px 14px',
+                  display: 'flex', alignItems: 'center',
+                  justifyContent: 'space-between', gap: 12,
+                }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{
+                      fontWeight: 600, fontSize: 13,
+                      color: typeColors[mov.type],
+                    }}>
+                      {typeLabels[mov.type]}
+                    </p>
+                    <p style={{
+                      color: 'var(--text-muted)', fontSize: 12,
+                      whiteSpace: 'nowrap', overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>
+                      {mov.route?.name}
+                      {mov.notes ? ` · ${mov.notes}` : ''}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">No hay movimientos registrados.</p>
-            )}
-          </div>
-
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <p style={{
+                      fontFamily: 'DM Mono', fontWeight: 700,
+                      fontSize: 14, color: 'var(--text-primary)',
+                    }}>
+                      {Number(mov.amount).toLocaleString('es-CO')}
+                    </p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 11 }}>
+                      {formatDate(mov.created_at)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, textAlign: 'center', padding: '20px 0' }}>
+              No hay movimientos registrados.
+            </p>
+          )}
         </div>
+
       </div>
     </main>
   )

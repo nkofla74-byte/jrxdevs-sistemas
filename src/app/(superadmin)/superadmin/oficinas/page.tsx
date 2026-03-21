@@ -1,146 +1,176 @@
 import { getOffices } from '@/modules/offices/actions'
-import Link from 'next/link'
 import { freezeOffice, activateOffice, deleteOffice } from '@/modules/offices/actions'
+import Link from 'next/link'
+import PageHeader from '@/components/shared/PageHeader'
 
 const countryNames: Record<string, string> = {
-  CO: '🇨🇴 Colombia',
-  PE: '🇵🇪 Perú',
-  EC: '🇪🇨 Ecuador',
-  BR: '🇧🇷 Brasil',
-}
-
-const statusStyles: Record<string, string> = {
-  active: 'bg-green-500/10 text-green-400 border-green-500/20',
-  frozen: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  inactive: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-}
-
-const statusLabels: Record<string, string> = {
-  active: 'Activa',
-  frozen: 'Congelada',
-  inactive: 'Inactiva',
+  CO: '🇨🇴 Colombia', PE: '🇵🇪 Perú',
+  EC: '🇪🇨 Ecuador', BR: '🇧🇷 Brasil',
 }
 
 export default async function OficinasPage() {
   const { data: offices, error } = await getOffices()
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
 
-      {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/superadmin" className="text-gray-400 hover:text-white transition text-sm">
-              ← Dashboard
-            </Link>
-            <span className="text-gray-600">/</span>
-            <span className="text-white font-semibold">Oficinas</span>
-          </div>
-          <Link
-            href="/superadmin/oficinas/nueva"
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"
-          >
-            + Nueva oficina
-          </Link>
-        </div>
-      </header>
+      <PageHeader
+        title="Oficinas"
+        backHref="/superadmin"
+        backLabel="← Inicio"
+        action={{ label: '+ Nueva', href: '/superadmin/oficinas/nueva' }}
+      />
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 16px' }}>
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Oficinas</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            {offices?.length ?? 0} oficinas registradas en el sistema
+        <div style={{ marginBottom: 20 }}>
+          <h1 style={{
+            fontFamily: 'Syne', fontWeight: 800, fontSize: 24,
+            color: 'var(--text-primary)', marginBottom: 4,
+          }}>Oficinas</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+            {offices?.length ?? 0} oficinas registradas
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div style={{
+            background: 'var(--danger-dim)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 14, padding: '12px 16px', marginBottom: 16,
+          }}>
+            <p style={{ color: 'var(--danger)', fontSize: 13 }}>{error}</p>
           </div>
         )}
 
-        {/* Lista de oficinas */}
         {offices && offices.length > 0 ? (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {offices.map((office) => (
-              <div
-                key={office.id}
-                className="bg-gray-900 rounded-2xl p-5 border border-gray-800 flex items-center justify-between gap-4"
-              >
-                {/* Info */}
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center">
-                    <span className="text-indigo-400 font-bold text-sm">
+              <div key={office.id} style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: 20, padding: 16,
+              }}>
+                <div className="flex items-center gap-3" style={{ marginBottom: 12 }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 14, flexShrink: 0,
+                    background: 'var(--gradient-primary)',
+                    boxShadow: '0 0 10px var(--neon-glow)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 18, color: 'white' }}>
                       {office.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <div>
-                    <p className="font-semibold text-white">{office.name}</p>
-                    <p className="text-gray-400 text-sm">
-                      {countryNames[office.country]} · {office.currency} · {office.plan === 'monthly' ? 'Mensual' : 'Trimestral'}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontWeight: 700, fontSize: 15, color: 'var(--text-primary)',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
+                      {office.name}
+                    </p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                      {countryNames[office.country]} · {office.currency}
+                    </p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                      {office.plan === 'monthly' ? 'Mensual' : 'Trimestral'}
                     </p>
                   </div>
+                  <span style={{
+                    flexShrink: 0,
+                    background: office.status === 'active'
+                      ? 'rgba(16,185,129,0.15)'
+                      : office.status === 'frozen'
+                      ? 'rgba(99,102,241,0.15)'
+                      : 'var(--bg-secondary)',
+                    color: office.status === 'active'
+                      ? 'var(--success)'
+                      : office.status === 'frozen'
+                      ? 'var(--info)'
+                      : 'var(--text-muted)',
+                    border: `1px solid ${office.status === 'active'
+                      ? 'rgba(16,185,129,0.3)'
+                      : office.status === 'frozen'
+                      ? 'rgba(99,102,241,0.3)'
+                      : 'var(--border)'}`,
+                    borderRadius: 99, padding: '3px 10px',
+                    fontSize: 11, fontWeight: 700,
+                  }}>
+                    {office.status === 'active' ? 'Activa' : office.status === 'frozen' ? 'Congelada' : 'Inactiva'}
+                  </span>
                 </div>
 
-                {/* Estado y acciones */}
-                <div className="flex items-center gap-3">
-                  <span className={`text-xs px-2.5 py-1 rounded-full border ${statusStyles[office.status]}`}>
-                    {statusLabels[office.status]}
-                  </span>
-
-                  <div className="flex items-center gap-2">
-                    {office.status === 'active' ? (
-                      <form action={async () => {
-                        'use server'
-                        await freezeOffice(office.id)
-                      }}>
-                        <button
-                          type="submit"
-                          className="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/20 transition"
-                        >
-                          Congelar
-                        </button>
-                      </form>
-                    ) : office.status === 'frozen' ? (
-                      <form action={async () => {
-                        'use server'
-                        await activateOffice(office.id)
-                      }}>
-                        <button
-                          type="submit"
-                          className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-400 px-3 py-1.5 rounded-lg border border-green-500/20 transition"
-                        >
-                          Activar
-                        </button>
-                      </form>
-                    ) : null}
-
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {office.status === 'active' ? (
                     <form action={async () => {
                       'use server'
-                      await deleteOffice(office.id)
-                    }}>
-                      <button
-                        type="submit"
-                        className="text-xs bg-red-600/20 hover:bg-red-600/30 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 transition"
-                      >
-                        Eliminar
+                      await freezeOffice(office.id)
+                    }} style={{ flex: 1 }}>
+                      <button type="submit" style={{
+                        width: '100%',
+                        background: 'rgba(99,102,241,0.1)',
+                        border: '1px solid rgba(99,102,241,0.2)',
+                        borderRadius: 12, padding: '10px 0',
+                        color: 'var(--info)', fontSize: 13,
+                        fontWeight: 600, cursor: 'pointer',
+                      }}>
+                        ❄️ Congelar
                       </button>
                     </form>
-                  </div>
+                  ) : office.status === 'frozen' ? (
+                    <form action={async () => {
+                      'use server'
+                      await activateOffice(office.id)
+                    }} style={{ flex: 1 }}>
+                      <button type="submit" style={{
+                        width: '100%',
+                        background: 'rgba(16,185,129,0.1)',
+                        border: '1px solid rgba(16,185,129,0.2)',
+                        borderRadius: 12, padding: '10px 0',
+                        color: 'var(--success)', fontSize: 13,
+                        fontWeight: 600, cursor: 'pointer',
+                      }}>
+                        ✅ Activar
+                      </button>
+                    </form>
+                  ) : null}
+
+                  <form action={async () => {
+                    'use server'
+                    await deleteOffice(office.id)
+                  }} style={{ flex: 1 }}>
+                    <button type="submit" style={{
+                      width: '100%',
+                      background: 'var(--danger-dim)',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                      borderRadius: 12, padding: '10px 0',
+                      color: 'var(--danger)', fontSize: 13,
+                      fontWeight: 600, cursor: 'pointer',
+                    }}>
+                      Eliminar
+                    </button>
+                  </form>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800 text-center">
-            <p className="text-4xl mb-4">🏢</p>
-            <p className="text-gray-400">No hay oficinas registradas todavía.</p>
-            <Link
-              href="/superadmin/oficinas/nueva"
-              className="inline-block mt-4 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"
-            >
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 20, padding: 48, textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 40, marginBottom: 12 }}>🏢</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>
+              No hay oficinas registradas.
+            </p>
+            <Link href="/superadmin/oficinas/nueva" style={{
+              background: 'var(--gradient-primary)',
+              borderRadius: 14, padding: '12px 24px',
+              color: 'white', fontSize: 14, fontWeight: 700,
+              textDecoration: 'none',
+              boxShadow: '0 0 12px var(--neon-glow)',
+            }}>
               Crear primera oficina
             </Link>
           </div>

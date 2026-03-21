@@ -2,34 +2,28 @@ import { createClient } from '@/lib/supabase/server'
 import { getCreditsByOffice } from '@/modules/credits/actions'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import PageHeader from '@/components/shared/PageHeader'
 import RouteFilter from '@/components/shared/RouteFilter'
 
-const statusColors: Record<string, string> = {
-  ACTIVE: 'bg-green-500/10 text-green-400 border-green-500/20',
-  CURRENT: 'bg-green-500/10 text-green-400 border-green-500/20',
-  WATCH: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  WARNING: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-  CRITICAL: 'bg-red-500/10 text-red-400 border-red-500/20',
-  CLOSED: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-  REFINANCED: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  WRITTEN_OFF: 'bg-gray-500/10 text-gray-500 border-gray-600/20',
+const statusColors: Record<string, { bg: string; color: string; border: string }> = {
+  ACTIVE: { bg: 'rgba(16,185,129,0.1)', color: '#10b981', border: 'rgba(16,185,129,0.2)' },
+  CURRENT: { bg: 'rgba(16,185,129,0.1)', color: '#10b981', border: 'rgba(16,185,129,0.2)' },
+  WATCH: { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: 'rgba(245,158,11,0.2)' },
+  WARNING: { bg: 'rgba(249,115,22,0.1)', color: '#f97316', border: 'rgba(249,115,22,0.2)' },
+  CRITICAL: { bg: 'var(--danger-dim)', color: 'var(--danger)', border: 'rgba(239,68,68,0.2)' },
+  CLOSED: { bg: 'var(--bg-secondary)', color: 'var(--text-muted)', border: 'var(--border)' },
+  REFINANCED: { bg: 'rgba(99,102,241,0.1)', color: 'var(--info)', border: 'rgba(99,102,241,0.2)' },
+  WRITTEN_OFF: { bg: 'var(--bg-secondary)', color: 'var(--text-muted)', border: 'var(--border)' },
 }
 
 const statusLabels: Record<string, string> = {
-  ACTIVE: 'Activo',
-  CURRENT: 'Al día',
-  WATCH: '🟡 Atención',
-  WARNING: '🟠 Advertencia',
-  CRITICAL: '🔴 Crítico',
-  CLOSED: 'Cerrado',
-  REFINANCED: 'Refinanciado',
-  WRITTEN_OFF: 'Incobrable',
+  ACTIVE: 'Activo', CURRENT: 'Al día', WATCH: '🟡 Atención',
+  WARNING: '🟠 Advertencia', CRITICAL: '🔴 Crítico',
+  CLOSED: 'Cerrado', REFINANCED: 'Refinanciado', WRITTEN_OFF: 'Incobrable',
 }
 
 const frequencyLabels: Record<string, string> = {
-  DAILY: 'Diario',
-  WEEKLY: 'Semanal',
-  MONTHLY: 'Mensual',
+  DAILY: 'Diario', WEEKLY: 'Semanal', MONTHLY: 'Mensual',
 }
 
 export default async function CreditosPage({
@@ -68,96 +62,150 @@ export default async function CreditosPage({
   ).length ?? 0
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
 
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/admin" className="text-gray-400 hover:text-white transition text-sm">
-              ← Dashboard
-            </Link>
-            <span className="text-gray-600">/</span>
-            <span className="text-white font-semibold">Créditos</span>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Créditos"
+        backHref="/admin"
+        backLabel="← Inicio"
+      />
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 16px' }}>
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
           <div>
-            <h1 className="text-2xl font-bold">Créditos</h1>
-            <p className="text-gray-400 text-sm mt-1">
-              {activeCount} activos · {criticalCount > 0 ? `🔴 ${criticalCount} críticos` : ''}
+            <h1 style={{
+              fontFamily: 'Syne', fontWeight: 800, fontSize: 24,
+              color: 'var(--text-primary)', marginBottom: 4,
+            }}>Créditos</h1>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+              {activeCount} activos
+              {criticalCount > 0 && (
+                <span style={{ color: 'var(--danger)', marginLeft: 8 }}>
+                  · 🔴 {criticalCount} críticos
+                </span>
+              )}
             </p>
           </div>
           <RouteFilter
-  routes={routes ?? []}
-  currentRoute={searchParams.ruta}
-  basePath="/admin/creditos"
-/>
+            routes={routes ?? []}
+            currentRoute={searchParams.ruta}
+            basePath="/admin/creditos"
+          />
         </div>
 
         {criticalCount > 0 && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
-            <span className="text-2xl">🔴</span>
-            <p className="text-red-400 text-sm font-semibold">
+          <div style={{
+            background: 'var(--danger-dim)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 16, padding: '14px 18px',
+            marginBottom: 16,
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <span style={{ fontSize: 24 }}>🔴</span>
+            <p style={{ color: 'var(--danger)', fontWeight: 700, fontSize: 14 }}>
               {criticalCount} crédito{criticalCount > 1 ? 's' : ''} en estado crítico — 6+ días sin pagar
             </p>
           </div>
         )}
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
-            <p className="text-red-400 text-sm">{error}</p>
-          </div>
-        )}
-
         {credits && credits.length > 0 ? (
-          <div className="space-y-3">
-            {credits.map((credit: any) => (
-              <Link
-                key={credit.id}
-                href={`/admin/creditos/${credit.id}`}
-                className="bg-gray-900 rounded-2xl p-5 border border-gray-800 hover:border-indigo-500/50 transition flex items-center justify-between gap-4 block"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-indigo-400 font-bold text-sm">
-                      {credit.client?.full_name?.charAt(0).toUpperCase()}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {credits.map((credit: any) => {
+              const colors = statusColors[credit.status] ?? statusColors.CLOSED
+              return (
+                <Link key={credit.id} href={`/admin/creditos/${credit.id}`}
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 18, padding: 16,
+                    textDecoration: 'none', display: 'block',
+                  }}
+                >
+                  <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+                    <div className="flex items-center gap-3">
+                      <div style={{
+                        width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                        background: 'var(--gradient-primary)',
+                        boxShadow: '0 0 8px var(--neon-glow)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 16, color: 'white' }}>
+                          {credit.client?.full_name?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{
+                          fontWeight: 700, fontSize: 14, color: 'var(--text-primary)',
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>
+                          {credit.client?.full_name}
+                        </p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                          {credit.route?.name} · {frequencyLabels[credit.frequency]}
+                        </p>
+                      </div>
+                    </div>
+                    <span style={{
+                      background: colors.bg, color: colors.color,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: 99, padding: '3px 10px',
+                      fontSize: 11, fontWeight: 700, flexShrink: 0,
+                    }}>
+                      {statusLabels[credit.status]}
                     </span>
                   </div>
-                  <div>
-                    <p className="font-semibold text-white">{credit.client?.full_name}</p>
-                    <p className="text-gray-400 text-sm">
-                      Doc: {credit.client?.document_number}
-                    </p>
-                    <p className="text-gray-500 text-xs mt-0.5">
-                      📍 {credit.route?.name} · {frequencyLabels[credit.frequency]}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="text-right">
-                    <p className="text-white font-semibold text-sm">
-                      {Number(credit.installment_amount).toLocaleString()}
-                    </p>
-                    <p className="text-gray-500 text-xs">
-                      {credit.paid_installments}/{credit.installments} cuotas
-                    </p>
+                  <div style={{
+                    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+                    gap: 8,
+                  }}>
+                    <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: 10 }}>
+                      <p style={{ color: 'var(--text-muted)', fontSize: 10, marginBottom: 2 }}>Capital</p>
+                      <p style={{ fontFamily: 'DM Mono', fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>
+                        {Number(credit.principal).toFixed(0)}
+                      </p>
+                    </div>
+                    <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: 10 }}>
+                      <p style={{ color: 'var(--text-muted)', fontSize: 10, marginBottom: 2 }}>Cuota</p>
+                      <p style={{ fontFamily: 'DM Mono', fontWeight: 700, fontSize: 13, color: 'var(--neon-bright)' }}>
+                        {Number(credit.installment_amount).toFixed(0)}
+                      </p>
+                    </div>
+                    <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: 10 }}>
+                      <p style={{ color: 'var(--text-muted)', fontSize: 10, marginBottom: 2 }}>Progreso</p>
+                      <p style={{ fontFamily: 'DM Mono', fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>
+                        {credit.paid_installments}/{credit.installments}
+                      </p>
+                    </div>
                   </div>
-                  <span className={`text-xs px-2.5 py-1 rounded-full border ${statusColors[credit.status]}`}>
-                    {statusLabels[credit.status]}
-                  </span>
-                </div>
-              </Link>
-            ))}
+
+                  <div style={{
+                    background: 'var(--bg-secondary)',
+                    borderRadius: 99, height: 6,
+                    marginTop: 10, overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      height: 6, borderRadius: 99,
+                      width: `${Math.min((credit.paid_installments / credit.installments) * 100, 100)}%`,
+                      background: 'var(--gradient-primary)',
+                      boxShadow: '0 0 8px var(--neon-glow)',
+                    }} />
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         ) : (
-          <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800 text-center">
-            <p className="text-4xl mb-4">💳</p>
-            <p className="text-gray-400">No hay créditos registrados todavía.</p>
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 20, padding: 48, textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 40, marginBottom: 12 }}>💳</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+              No hay créditos registrados.
+            </p>
           </div>
         )}
       </div>

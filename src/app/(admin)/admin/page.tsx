@@ -1,6 +1,7 @@
 import { getOfficeDashboard } from '@/modules/offices/admin-actions'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import ThemeToggle from '@/components/shared/ThemeToggle'
 
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat('es-CO', {
@@ -21,27 +22,57 @@ export default async function AdminDashboard() {
   const currency = tenant?.currency ?? 'COP'
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
 
-      {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div style={{
+          position: 'absolute', top: '-10%', right: '-10%',
+          width: '50%', height: '50%',
+          background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)',
+          borderRadius: '50%',
+        }} />
+      </div>
+
+      <header style={{
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border)',
+        padding: '14px 20px',
+        position: 'sticky', top: 0, zIndex: 50,
+      }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">
+            <div style={{
+              width: 40, height: 40, borderRadius: 14,
+              background: 'var(--gradient-primary)',
+              boxShadow: '0 0 15px var(--neon-glow)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 16, color: 'white' }}>
                 {tenant?.name?.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <p className="font-bold text-white text-sm">{tenant?.name}</p>
-              <p className="text-gray-500 text-xs">{tenant?.country} · {currency}</p>
+              <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
+                {tenant?.name}
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                {tenant?.country} · {currency}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-400 text-sm">{adminName}</span>
+          <div className="flex items-center gap-3">
+            <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>{adminName}</span>
+            <ThemeToggle />
             <form action="/api/auth/logout" method="POST">
-              <button className="text-gray-400 hover:text-white text-sm transition">
-                Cerrar sesión
+              <button style={{
+                background: 'var(--danger-dim)',
+                border: '1px solid rgba(239,68,68,0.2)',
+                borderRadius: 10, padding: '6px 14px',
+                color: 'var(--danger)', fontSize: 13,
+                fontWeight: 600, cursor: 'pointer',
+              }}>
+                Salir
               </button>
             </form>
           </div>
@@ -50,100 +81,130 @@ export default async function AdminDashboard() {
 
       <div className="max-w-6xl mx-auto px-6 py-8">
 
-        {/* Bienvenida */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-gray-400 text-sm mt-1">
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{
+            fontFamily: 'Syne', fontWeight: 800, fontSize: 26,
+            color: 'var(--text-primary)', marginBottom: 4,
+          }}>
+            Dashboard 👋
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
             Vista global de {tenant?.name}
           </p>
         </div>
 
-        {/* Alerta créditos críticos */}
         {criticalCredits > 0 && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
-            <span className="text-2xl">🔴</span>
+          <div style={{
+            background: 'var(--danger-dim)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 16, padding: '14px 18px',
+            marginBottom: 24,
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <span style={{ fontSize: 24 }}>🔴</span>
             <div>
-              <p className="text-red-400 font-semibold text-sm">
+              <p style={{ color: 'var(--danger)', fontWeight: 700, fontSize: 14 }}>
                 {criticalCredits} crédito{criticalCredits > 1 ? 's' : ''} en estado crítico
               </p>
-              <p className="text-red-400/70 text-xs">6+ días sin pagar — requiere atención inmediata</p>
+              <p style={{ color: 'rgba(239,68,68,0.7)', fontSize: 12 }}>
+                6+ días sin pagar — requiere atención inmediata
+              </p>
             </div>
           </div>
         )}
 
-        {/* Métricas globales */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-gray-400 text-xs mb-1">Dinero en calle</p>
-            <p className="text-2xl font-bold text-white">
-              {formatCurrency(totalInStreet, currency)}
-            </p>
-            <p className="text-indigo-400 text-xs mt-1">Capital prestado activo</p>
-          </div>
-
-          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-gray-400 text-xs mb-1">Cobrado hoy</p>
-            <p className="text-2xl font-bold text-green-400">
-              {formatCurrency(collectedToday, currency)}
-            </p>
-            <p className="text-gray-500 text-xs mt-1">Todas las rutas</p>
-          </div>
-
-          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-gray-400 text-xs mb-1">Cobrado este mes</p>
-            <p className="text-2xl font-bold text-white">
-              {formatCurrency(collectedMonth, currency)}
-            </p>
-            <p className="text-gray-500 text-xs mt-1">Acumulado del mes</p>
-          </div>
-
-          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-gray-400 text-xs mb-1">Clientes activos</p>
-            <p className="text-2xl font-bold text-white">{activeClients}</p>
-            <p className="text-gray-500 text-xs mt-1">Con crédito vigente</p>
-          </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 14, marginBottom: 28,
+        }}>
+          {[
+            { label: 'Dinero en calle', value: formatCurrency(totalInStreet, currency), icon: '💰', color: 'var(--neon-bright)', sub: 'Capital prestado activo' },
+            { label: 'Cobrado hoy', value: formatCurrency(collectedToday, currency), icon: '📥', color: 'var(--success)', sub: 'Todas las rutas' },
+            { label: 'Cobrado este mes', value: formatCurrency(collectedMonth, currency), icon: '📊', color: 'var(--text-primary)', sub: 'Acumulado del mes' },
+            { label: 'Clientes activos', value: String(activeClients), icon: '👥', color: 'var(--warning)', sub: 'Con crédito vigente' },
+          ].map((metric) => (
+            <div key={metric.label} style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 20, padding: 18,
+            }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>{metric.label}</p>
+                <span style={{ fontSize: 20 }}>{metric.icon}</span>
+              </div>
+              <p style={{
+                fontFamily: 'DM Mono', fontWeight: 700, fontSize: 22,
+                color: metric.color, marginBottom: 4,
+              }}>
+                {metric.value}
+              </p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 11 }}>{metric.sub}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Rutas */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">
+        <div style={{ marginBottom: 28 }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+            <h2 style={{
+              fontFamily: 'Syne', fontWeight: 700, fontSize: 18,
+              color: 'var(--text-primary)',
+            }}>
               Rutas activas ({totalRoutes})
             </h2>
           </div>
 
           {routes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 14,
+            }}>
               {routes.map((route: any) => (
-                <Link
-                  key={route.id}
-                  href={`/admin/rutas/${route.id}`}
-                  className="bg-gray-900 rounded-2xl p-5 border border-gray-800 hover:border-indigo-500/50 transition group"
+                <Link key={route.id} href={`/admin/rutas/${route.id}`}
+                  className="action-card"
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 20, padding: 20,
+                    textDecoration: 'none', display: 'block',
+                    transition: 'all 0.2s',
+                  }}
                 >
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center">
-                        <span className="text-indigo-400 text-lg">🗺️</span>
+                      <div style={{
+                        width: 40, height: 40, borderRadius: 14,
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border)',
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', fontSize: 20,
+                      }}>
+                        🗺️
                       </div>
-                      <p className="font-semibold text-white group-hover:text-indigo-400 transition">
+                      <p style={{
+                        fontFamily: 'Syne', fontWeight: 700, fontSize: 15,
+                        color: 'var(--text-primary)',
+                      }}>
                         {route.name}
                       </p>
                     </div>
-                    <span className="text-gray-500 text-xs">Ver detalle →</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: 18 }}>›</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-gray-800 rounded-xl p-3">
-                      <p className="text-gray-500 text-xs">Capital inyectado</p>
-                      <p className="text-white font-semibold text-sm mt-0.5">
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ background: 'var(--bg-secondary)', borderRadius: 14, padding: 12 }}>
+                      <p style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>Capital inyectado</p>
+                      <p style={{ fontFamily: 'DM Mono', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
                         {formatCurrency(Number(route.capital_injected), currency)}
                       </p>
                     </div>
-                    <div className="bg-gray-800 rounded-xl p-3">
-                      <p className="text-gray-500 text-xs">Estado</p>
-                      <p className={`font-semibold text-sm mt-0.5 ${
-                        route.status === 'active' ? 'text-green-400' : 'text-gray-400'
-                      }`}>
-                        {route.status === 'active' ? 'Activa' : 'Inactiva'}
+                    <div style={{ background: 'var(--bg-secondary)', borderRadius: 14, padding: 12 }}>
+                      <p style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>Estado</p>
+                      <p style={{
+                        fontWeight: 700, fontSize: 14,
+                        color: route.status === 'active' ? 'var(--success)' : 'var(--text-muted)',
+                      }}>
+                        {route.status === 'active' ? '● Activa' : '○ Inactiva'}
                       </p>
                     </div>
                   </div>
@@ -151,33 +212,55 @@ export default async function AdminDashboard() {
               ))}
             </div>
           ) : (
-            <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center">
-              <p className="text-4xl mb-3">🗺️</p>
-              <p className="text-gray-400 text-sm">No hay rutas activas en esta oficina.</p>
+            <div style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 20, padding: 40, textAlign: 'center',
+            }}>
+              <p style={{ fontSize: 40, marginBottom: 12 }}>🗺️</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No hay rutas activas.</p>
             </div>
           )}
         </div>
 
-        {/* Acciones rápidas */}
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-          <h2 className="text-lg font-semibold mb-4">Acciones rápidas</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Link href="/admin/clientes" className="bg-gray-800 hover:bg-gray-700 rounded-xl p-4 text-center transition block">
-              <p className="text-2xl mb-2">👥</p>
-              <p className="text-sm text-gray-300">Clientes</p>
-            </Link>
-            <Link href="/admin/creditos" className="bg-gray-800 hover:bg-gray-700 rounded-xl p-4 text-center transition block">
-              <p className="text-2xl mb-2">💳</p>
-              <p className="text-sm text-gray-300">Créditos</p>
-            </Link>
-            <Link href="/admin/capital" className="bg-gray-800 hover:bg-gray-700 rounded-xl p-4 text-center transition block">
-              <p className="text-2xl mb-2">💰</p>
-              <p className="text-sm text-gray-300">Capital</p>
-            </Link>
-            <Link href="/admin/cierres" className="bg-gray-800 hover:bg-gray-700 rounded-xl p-4 text-center transition block">
-              <p className="text-2xl mb-2">📊</p>
-              <p className="text-sm text-gray-300">Cierres de caja</p>
-            </Link>
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 24, padding: 24,
+        }}>
+          <h2 style={{
+            fontFamily: 'Syne', fontWeight: 700, fontSize: 18,
+            color: 'var(--text-primary)', marginBottom: 20,
+          }}>
+            Acciones rápidas
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+            gap: 12,
+          }}>
+            {[
+              { icon: '👥', label: 'Clientes', href: '/admin/clientes' },
+              { icon: '💳', label: 'Créditos', href: '/admin/creditos' },
+              { icon: '💰', label: 'Capital', href: '/admin/capital' },
+              { icon: '📊', label: 'Cierres', href: '/admin/cierres' },
+            ].map((action) => (
+              <Link key={action.label} href={action.href}
+                className="action-card"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 18, padding: '20px 16px',
+                  textAlign: 'center', textDecoration: 'none',
+                  display: 'block', transition: 'all 0.2s',
+                }}
+              >
+                <p style={{ fontSize: 30, marginBottom: 10 }}>{action.icon}</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>
+                  {action.label}
+                </p>
+              </Link>
+            ))}
           </div>
         </div>
 

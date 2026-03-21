@@ -1,131 +1,165 @@
 import { getAllRoutes } from '@/modules/routes/actions'
 import { toggleRouteStatus, deleteRoute } from '@/modules/routes/actions'
 import Link from 'next/link'
+import PageHeader from '@/components/shared/PageHeader'
 
 const countryFlags: Record<string, string> = {
-  CO: '🇨🇴',
-  PE: '🇵🇪',
-  EC: '🇪🇨',
-  BR: '🇧🇷',
+  CO: '🇨🇴', PE: '🇵🇪', EC: '🇪🇨', BR: '🇧🇷',
 }
 
 export default async function RutasPage() {
   const { data: routes, error } = await getAllRoutes()
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
 
-      {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/superadmin" className="text-gray-400 hover:text-white transition text-sm">
-              ← Dashboard
-            </Link>
-            <span className="text-gray-600">/</span>
-            <span className="text-white font-semibold">Rutas</span>
-          </div>
-          <Link
-            href="/superadmin/rutas/nueva"
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"
-          >
-            + Nueva ruta
-          </Link>
-        </div>
-      </header>
+      <PageHeader
+        title="Rutas"
+        backHref="/superadmin"
+        backLabel="← Inicio"
+        action={{ label: '+ Nueva', href: '/superadmin/rutas/nueva' }}
+      />
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 16px' }}>
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Rutas</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            {routes?.length ?? 0} rutas registradas en el sistema
+        <div style={{ marginBottom: 20 }}>
+          <h1 style={{
+            fontFamily: 'Syne', fontWeight: 800, fontSize: 24,
+            color: 'var(--text-primary)', marginBottom: 4,
+          }}>Rutas</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+            {routes?.length ?? 0} rutas registradas
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div style={{
+            background: 'var(--danger-dim)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 14, padding: '12px 16px', marginBottom: 16,
+          }}>
+            <p style={{ color: 'var(--danger)', fontSize: 13 }}>{error}</p>
           </div>
         )}
 
         {routes && routes.length > 0 ? (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {routes.map((route: any) => (
-              <div
-                key={route.id}
-                className="bg-gray-900 rounded-2xl p-5 border border-gray-800 flex items-center justify-between gap-4"
-              >
+              <div key={route.id} style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: 20, padding: 16,
+              }}>
                 {/* Info */}
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center">
-                    <span className="text-indigo-400 text-lg">🗺️</span>
+                <div className="flex items-center gap-3" style={{ marginBottom: 12 }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 14, flexShrink: 0,
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', fontSize: 22,
+                  }}>
+                    🗺️
                   </div>
-                  <div>
-<Link href={`/superadmin/rutas/${route.id}`} className="font-semibold text-white hover:text-indigo-400 transition">
-  {route.name}
-</Link>                    <p className="text-gray-400 text-sm">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Link href={`/superadmin/rutas/${route.id}`} style={{
+                      fontWeight: 700, fontSize: 15,
+                      color: 'var(--neon-bright)',
+                      textDecoration: 'none',
+                      whiteSpace: 'nowrap', overflow: 'hidden',
+                      textOverflow: 'ellipsis', display: 'block',
+                    }}>
+                      {route.name}
+                    </Link>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
                       {countryFlags[route.tenant?.country]} {route.tenant?.name} · {route.tenant?.currency}
                     </p>
-                    <p className="text-gray-500 text-xs mt-0.5">
-                      {route.cobrador
-                        ? `👤 ${route.cobrador.full_name}`
-                        : '⚠️ Sin cobrador asignado'}
-                    </p>
                   </div>
-                </div>
-
-                {/* Estado y acciones */}
-                <div className="flex items-center gap-3">
-                  <span className={`text-xs px-2.5 py-1 rounded-full border ${
-                    route.status === 'active'
-                      ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                      : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-                  }`}>
+                  <span style={{
+                    flexShrink: 0,
+                    background: route.status === 'active'
+                      ? 'rgba(16,185,129,0.15)'
+                      : 'var(--bg-secondary)',
+                    color: route.status === 'active' ? 'var(--success)' : 'var(--text-muted)',
+                    border: `1px solid ${route.status === 'active'
+                      ? 'rgba(16,185,129,0.3)' : 'var(--border)'}`,
+                    borderRadius: 99, padding: '3px 10px',
+                    fontSize: 11, fontWeight: 700,
+                  }}>
                     {route.status === 'active' ? 'Activa' : 'Inactiva'}
                   </span>
+                </div>
 
-                  <div className="flex items-center gap-2">
-                    <form action={async () => {
-                      'use server'
-                      await toggleRouteStatus(route.id, route.status)
-                    }}>
-                      <button
-                        type="submit"
-                        className={`text-xs px-3 py-1.5 rounded-lg border transition ${
-                          route.status === 'active'
-                            ? 'bg-gray-600/20 hover:bg-gray-600/30 text-gray-400 border-gray-500/20'
-                            : 'bg-green-600/20 hover:bg-green-600/30 text-green-400 border-green-500/20'
-                        }`}
-                      >
-                        {route.status === 'active' ? 'Desactivar' : 'Activar'}
-                      </button>
-                    </form>
+                {/* Botones */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Link href={`/superadmin/rutas/${route.id}`} style={{
+                    flex: 1,
+                    background: 'rgba(139,92,246,0.1)',
+                    border: '1px solid rgba(139,92,246,0.2)',
+                    borderRadius: 12, padding: '10px 0',
+                    color: 'var(--neon-bright)', fontSize: 13,
+                    fontWeight: 600, textDecoration: 'none',
+                    textAlign: 'center', display: 'block',
+                  }}>
+                    Ver detalle
+                  </Link>
 
-                    <form action={async () => {
-                      'use server'
-                      await deleteRoute(route.id)
+                  <form action={async () => {
+                    'use server'
+                    await toggleRouteStatus(route.id, route.status)
+                  }} style={{ flex: 1 }}>
+                    <button type="submit" style={{
+                      width: '100%',
+                      background: route.status === 'active'
+                        ? 'var(--bg-secondary)'
+                        : 'rgba(16,185,129,0.1)',
+                      border: `1px solid ${route.status === 'active'
+                        ? 'var(--border)' : 'rgba(16,185,129,0.2)'}`,
+                      borderRadius: 12, padding: '10px 0',
+                      color: route.status === 'active'
+                        ? 'var(--text-muted)' : 'var(--success)',
+                      fontSize: 13, fontWeight: 600, cursor: 'pointer',
                     }}>
-                      <button
-                        type="submit"
-                        className="text-xs bg-red-600/20 hover:bg-red-600/30 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 transition"
-                      >
-                        Eliminar
-                      </button>
-                    </form>
-                  </div>
+                      {route.status === 'active' ? 'Desactivar' : 'Activar'}
+                    </button>
+                  </form>
+
+                  <form action={async () => {
+                    'use server'
+                    await deleteRoute(route.id)
+                  }} style={{ flex: 1 }}>
+                    <button type="submit" style={{
+                      width: '100%',
+                      background: 'var(--danger-dim)',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                      borderRadius: 12, padding: '10px 0',
+                      color: 'var(--danger)', fontSize: 13,
+                      fontWeight: 600, cursor: 'pointer',
+                    }}>
+                      Eliminar
+                    </button>
+                  </form>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800 text-center">
-            <p className="text-4xl mb-4">🗺️</p>
-            <p className="text-gray-400">No hay rutas registradas todavía.</p>
-            <Link
-              href="/superadmin/rutas/nueva"
-              className="inline-block mt-4 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"
-            >
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 20, padding: 48, textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 40, marginBottom: 12 }}>🗺️</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>
+              No hay rutas registradas.
+            </p>
+            <Link href="/superadmin/rutas/nueva" style={{
+              background: 'var(--gradient-primary)',
+              borderRadius: 14, padding: '12px 24px',
+              color: 'white', fontSize: 14, fontWeight: 700,
+              textDecoration: 'none',
+              boxShadow: '0 0 12px var(--neon-glow)',
+            }}>
               Crear primera ruta
             </Link>
           </div>

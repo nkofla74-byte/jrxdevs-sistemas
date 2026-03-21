@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { toggleRouteStatus, deleteRoute, regenerateRoutePassword, resetRouteDevice } from '@/modules/routes/actions'
+import { toggleRouteStatus, deleteRoute, regenerateRoutePassword } from '@/modules/routes/actions'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import PageHeader from '@/components/shared/PageHeader'
 
 export default async function RutaDetailPage({
   params,
@@ -12,77 +13,95 @@ export default async function RutaDetailPage({
 
   const { data: route, error } = await supabase
     .from('routes')
-    .select(`
-      *,
-      tenant:tenants(id, name, country, currency)
-    `)
+    .select('*, tenant:tenants(id, name, country, currency)')
     .eq('id', params.id)
     .single()
 
   if (error || !route) redirect('/superadmin/rutas')
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
 
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/superadmin/rutas" className="text-gray-400 hover:text-white transition text-sm">
-              ← Rutas
-            </Link>
-            <span className="text-gray-600">/</span>
-            <span className="text-white font-semibold">{route.name}</span>
-          </div>
-          <span className={`text-xs px-2.5 py-1 rounded-full border ${
-            route.status === 'active'
-              ? 'bg-green-500/10 text-green-400 border-green-500/20'
-              : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-          }`}>
-            {route.status === 'active' ? 'Activa' : 'Inactiva'}
-          </span>
-        </div>
-      </header>
+      <PageHeader
+        title={route.name}
+        backHref="/superadmin/rutas"
+        backLabel="← Rutas"
+      />
 
-      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Info de la ruta */}
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-          <h2 className="text-lg font-semibold mb-4">Información</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-gray-400 text-xs mb-1">Ruta</p>
-              <p className="text-white font-medium">{route.name}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 text-xs mb-1">Oficina</p>
-              <p className="text-white font-medium">{route.tenant?.name}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 text-xs mb-1">País</p>
-              <p className="text-white font-medium">{route.tenant?.country}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 text-xs mb-1">Moneda</p>
-              <p className="text-white font-medium">{route.tenant?.currency}</p>
-            </div>
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 20, padding: 20,
+        }}>
+          <h2 style={{
+            fontFamily: 'Syne', fontWeight: 700, fontSize: 16,
+            color: 'var(--text-primary)', marginBottom: 16,
+          }}>
+            Información
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {[
+              { label: 'Ruta', value: route.name },
+              { label: 'Oficina', value: route.tenant?.name },
+              { label: 'País', value: route.tenant?.country },
+              { label: 'Moneda', value: route.tenant?.currency },
+              { label: 'Estado', value: route.status === 'active' ? '● Activa' : '○ Inactiva' },
+              { label: 'Capital', value: Number(route.capital_injected).toLocaleString() },
+            ].map((item) => (
+              <div key={item.label} style={{
+                background: 'var(--bg-secondary)',
+                borderRadius: 14, padding: 12,
+              }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>{item.label}</p>
+                <p style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 14 }}>{item.value}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Credenciales de acceso */}
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-          <h2 className="text-lg font-semibold mb-4">Credenciales de acceso</h2>
-          <p className="text-gray-400 text-sm mb-4">
+        {/* Credenciales */}
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--neon-primary)',
+          borderRadius: 20, padding: 20,
+          boxShadow: '0 0 20px var(--neon-glow)',
+        }}>
+          <h2 style={{
+            fontFamily: 'Syne', fontWeight: 700, fontSize: 16,
+            color: 'var(--text-primary)', marginBottom: 6,
+          }}>
+            🔐 Credenciales de acceso
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
             Entrega estas credenciales al cobrador de esta ruta.
           </p>
 
-          <div className="bg-gray-800 rounded-xl p-4 space-y-3 mb-4">
+          <div style={{
+            background: 'var(--bg-secondary)',
+            borderRadius: 16, padding: 16,
+            display: 'flex', flexDirection: 'column', gap: 12,
+            marginBottom: 16,
+          }}>
             <div>
-              <p className="text-gray-400 text-xs mb-1">Usuario</p>
-              <p className="text-indigo-400 font-mono text-sm">{route.access_email}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>Usuario</p>
+              <p style={{
+                fontFamily: 'DM Mono', fontSize: 14,
+                color: 'var(--neon-bright)', fontWeight: 500,
+                wordBreak: 'break-all',
+              }}>
+                {route.access_email}
+              </p>
             </div>
             <div>
-              <p className="text-gray-400 text-xs mb-1">Contraseña actual</p>
-              <p className="text-green-400 font-mono text-xl font-bold tracking-widest">
+              <p style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>Contraseña</p>
+              <p style={{
+                fontFamily: 'DM Mono', fontSize: 26,
+                color: 'var(--success)', fontWeight: 700,
+                letterSpacing: '0.15em',
+              }}>
                 {route.access_password}
               </p>
             </div>
@@ -90,43 +109,68 @@ export default async function RutaDetailPage({
 
           <form action={async () => {
             'use server'
-            await regenerateRoutePassword(route.id)
+            await regenerateRoutePassword(params.id)
           }}>
-            <button
-              type="submit"
-              className="text-sm bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-xl border border-yellow-500/20 transition"
-            >
+            <button type="submit" style={{
+              width: '100%',
+              background: 'rgba(245,158,11,0.1)',
+              border: '1px solid rgba(245,158,11,0.2)',
+              borderRadius: 14, padding: '12px 0',
+              color: 'var(--warning)', fontSize: 14,
+              fontWeight: 600, cursor: 'pointer',
+            }}>
               🔄 Regenerar contraseña
             </button>
           </form>
         </div>
 
         {/* Acciones */}
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-          <h2 className="text-lg font-semibold mb-4">Acciones</h2>
-        <form action={async () => {
-  'use server'
-  await resetRouteDevice(route.id)
-}}>
-  <button
-    type="submit"
-    className="text-sm bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-xl border border-yellow-500/20 transition"
-  >
-    📱 Resetear dispositivo
-  </button>
-</form>
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 20, padding: 20,
+        }}>
+          <h2 style={{
+            fontFamily: 'Syne', fontWeight: 700, fontSize: 16,
+            color: 'var(--text-primary)', marginBottom: 16,
+          }}>
+            Acciones
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <form action={async () => {
+              'use server'
+              await toggleRouteStatus(params.id, route.status)
+            }}>
+              <button type="submit" style={{
+                width: '100%',
+                background: route.status === 'active'
+                  ? 'var(--bg-secondary)'
+                  : 'rgba(16,185,129,0.1)',
+                border: `1px solid ${route.status === 'active'
+                  ? 'var(--border)' : 'rgba(16,185,129,0.2)'}`,
+                borderRadius: 14, padding: '14px 0',
+                color: route.status === 'active'
+                  ? 'var(--text-muted)' : 'var(--success)',
+                fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              }}>
+                {route.status === 'active' ? 'Desactivar ruta' : '✅ Activar ruta'}
+              </button>
             </form>
 
             <form action={async () => {
               'use server'
-              await deleteRoute(route.id)
+              await deleteRoute(params.id)
               redirect('/superadmin/rutas')
             }}>
-              <button
-                type="submit"
-                className="text-sm bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-2 rounded-xl border border-red-500/20 transition"
-              >
-                Eliminar ruta
+              <button type="submit" style={{
+                width: '100%',
+                background: 'var(--danger-dim)',
+                border: '1px solid rgba(239,68,68,0.2)',
+                borderRadius: 14, padding: '14px 0',
+                color: 'var(--danger)', fontSize: 14,
+                fontWeight: 600, cursor: 'pointer',
+              }}>
+                🗑️ Eliminar ruta
               </button>
             </form>
           </div>

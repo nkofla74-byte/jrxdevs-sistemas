@@ -4,13 +4,11 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import GastoModal from './GastoModal'
 import TotalizarModal from './TotalizarModal'
+import ThemeToggle from '@/components/shared/ThemeToggle'
 
 const creditStatusEmoji: Record<string, string> = {
-  ACTIVE: '🟢',
-  CURRENT: '🟢',
-  WATCH: '🟡',
-  WARNING: '🟠',
-  CRITICAL: '🔴',
+  ACTIVE: '🟢', CURRENT: '🟢', WATCH: '🟡',
+  WARNING: '🟠', CRITICAL: '🔴',
 }
 
 export default function CobradorDashboard({ data }: { data: any }) {
@@ -27,21 +25,20 @@ export default function CobradorDashboard({ data }: { data: any }) {
     todayPaidClientIds,
   } = data
 
-  // Verificar GPS
   useEffect(() => {
+    const saved = localStorage.getItem('jrx_theme') || 'dark'
+    document.documentElement.setAttribute('data-theme', saved)
+
     navigator.geolocation.getCurrentPosition(
       () => { setGpsActive(true); setGpsChecked(true) },
       () => { setGpsActive(false); setGpsChecked(true) }
     )
   }, [])
 
-  // Reloj en tiempo real
   useEffect(() => {
     const update = () => {
       const now = new Date()
-      setCurrentTime(now.toLocaleTimeString('es-CO', {
-        hour: '2-digit', minute: '2-digit'
-      }))
+      setCurrentTime(now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }))
     }
     update()
     const interval = setInterval(update, 1000)
@@ -57,19 +54,20 @@ export default function CobradorDashboard({ data }: { data: any }) {
   // Pantalla de bloqueo GPS
   if (gpsChecked && !gpsActive) {
     return (
-      <main className="min-h-screen bg-gray-950 flex items-center justify-center px-6">
-        <div className="text-center max-w-sm">
-          <div className="w-24 h-24 rounded-3xl bg-red-500/20 border-2 border-red-500/30 flex items-center justify-center mx-auto mb-6">
+      <main className="min-h-screen flex items-center justify-center px-6"
+        style={{ background: 'var(--bg-primary)' }}>
+        <div className="text-center max-w-sm animate-fade-in">
+          <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-6"
+            style={{ background: 'var(--danger-dim)', border: '2px solid rgba(239,68,68,0.3)' }}>
             <span className="text-5xl">📍</span>
           </div>
-          <h1 className="text-white text-2xl font-bold mb-3">GPS requerido</h1>
-          <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-            Debes activar el GPS de tu dispositivo para poder operar. Es obligatorio por seguridad.
+          <h1 style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 24, color: 'var(--text-primary)', marginBottom: 12 }}>
+            GPS requerido
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
+            Debes activar el GPS de tu dispositivo para poder operar.
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition text-base"
-          >
+          <button onClick={() => window.location.reload()} className="btn-primary">
             Ya activé el GPS — Reintentar
           </button>
         </div>
@@ -78,32 +76,55 @@ export default function CobradorDashboard({ data }: { data: any }) {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white flex flex-col">
+    <main className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
 
       {/* Header */}
-      <div className="bg-gray-900 border-b border-gray-800 px-4 py-3">
+      <div style={{
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border)',
+        padding: '12px 16px',
+      }}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-white font-bold text-base">{route.name}</p>
-            <p className="text-gray-400 text-xs">
-              {new Date().toLocaleDateString('es-CO', {
-                weekday: 'long', day: 'numeric', month: 'long'
-              })}
+            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
+              {route.name}
+            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+              {new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-white font-mono font-bold text-lg">{currentTime}</p>
-            <p className={`text-xs ${gpsActive ? 'text-green-400' : 'text-red-400'}`}>
-              {gpsActive ? '📍 GPS activo' : '📍 GPS inactivo'}
-            </p>
-          </div>
+          <div className="flex items-center gap-3">
+  <div className="text-right">
+    <p style={{ fontFamily: 'DM Mono', fontWeight: 700, fontSize: 20, color: 'var(--neon-bright)' }}>
+      {currentTime}
+    </p>
+    <p style={{ fontSize: 11, color: gpsActive ? 'var(--success)' : 'var(--danger)' }}>
+      {gpsActive ? '📍 GPS activo' : '📍 GPS inactivo'}
+    </p>
+  </div>
+  <ThemeToggle />
+  <form action="/api/auth/logout" method="POST">
+    <button style={{
+      background: 'var(--danger-dim)',
+      border: '1px solid rgba(239,68,68,0.2)',
+      borderRadius: 10,
+      padding: '6px 12px',
+      color: 'var(--danger)',
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: 'pointer',
+    }}>
+      Salir
+    </button>
+  </form>
+</div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
 
         {/* Botones superiores */}
-        <div className="grid grid-cols-4 gap-2 px-4 pt-4 pb-2">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, padding: '12px 16px 8px' }}>
           {[
             { icon: '📊', label: 'Informes', href: '/cobrador/informes' },
             { icon: '🗺️', label: 'Enrutar', href: '/cobrador/enrutar' },
@@ -111,93 +132,136 @@ export default function CobradorDashboard({ data }: { data: any }) {
             { icon: '🧾', label: 'Totalizar', action: () => setShowTotalizar(true) },
           ].map((btn) => (
             btn.href ? (
-              <Link
-                key={btn.label}
-                href={btn.href}
-                className="bg-gray-800 hover:bg-gray-700 rounded-2xl p-3 text-center transition active:scale-95"
+              <Link key={btn.label} href={btn.href}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 16,
+                  padding: '12px 8px',
+                  textAlign: 'center',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s',
+                  display: 'block',
+                }}
               >
-                <p className="text-2xl mb-1">{btn.icon}</p>
-                <p className="text-gray-300 text-xs font-medium">{btn.label}</p>
+                <p style={{ fontSize: 22, marginBottom: 4 }}>{btn.icon}</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>{btn.label}</p>
               </Link>
             ) : (
-              <button
-                key={btn.label}
-                onClick={btn.action}
-                className="bg-gray-800 hover:bg-gray-700 rounded-2xl p-3 text-center transition active:scale-95"
+              <button key={btn.label} onClick={btn.action}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 16,
+                  padding: '12px 8px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
               >
-                <p className="text-2xl mb-1">{btn.icon}</p>
-                <p className="text-gray-300 text-xs font-medium">{btn.label}</p>
+                <p style={{ fontSize: 22, marginBottom: 4 }}>{btn.icon}</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>{btn.label}</p>
               </button>
             )
           ))}
         </div>
 
         {/* Panel financiero */}
-        <div className="mx-4 bg-gray-900 rounded-3xl border border-gray-800 p-4 mb-3">
+        <div style={{
+          margin: '0 16px 12px',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 24,
+          padding: 16,
+        }}>
 
-          {/* Alerta fuera de horario */}
           {!isWithinSchedule && (
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-3 mb-3 flex items-center gap-2">
+            <div style={{
+              background: 'var(--warning-dim)',
+              border: '1px solid rgba(245,158,11,0.3)',
+              borderRadius: 14,
+              padding: '10px 14px',
+              marginBottom: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}>
               <span>⏰</span>
-              <p className="text-yellow-400 text-xs font-medium">Fuera del horario de operación — modo solo lectura</p>
+              <p style={{ color: 'var(--warning)', fontSize: 12, fontWeight: 500 }}>
+                Fuera del horario — modo solo lectura
+              </p>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-gray-800 rounded-2xl p-3">
-              <p className="text-gray-500 text-xs mb-1">💰 Prestado</p>
-              <p className="text-white font-bold text-lg leading-tight">{fmt(totalInStreet)}</p>
-              <p className="text-gray-600 text-xs">{currency}</p>
-            </div>
-            <div className="bg-gray-800 rounded-2xl p-3">
-              <p className="text-gray-500 text-xs mb-1">📥 Cobrado</p>
-              <p className="text-green-400 font-bold text-lg leading-tight">{fmt(collectedToday)}</p>
-              <p className="text-gray-600 text-xs">{currency}</p>
-            </div>
-            <div className="bg-gray-800 rounded-2xl p-3">
-              <p className="text-gray-500 text-xs mb-1">📊 Por cobrar</p>
-              <p className="text-yellow-400 font-bold text-lg leading-tight">{fmt(pendingToCollect > 0 ? pendingToCollect : 0)}</p>
-              <p className="text-gray-600 text-xs">{currency}</p>
-            </div>
-            <div className="bg-gray-800 rounded-2xl p-3">
-              <p className="text-gray-500 text-xs mb-1">🎯 Meta del día</p>
-              <p className="text-indigo-400 font-bold text-lg leading-tight">{fmt(dailyGoal)}</p>
-              <p className="text-gray-600 text-xs">{currency}</p>
-            </div>
+          {/* Métricas */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+            {[
+              { label: '💰 Prestado', value: fmt(totalInStreet), color: 'var(--neon-bright)' },
+              { label: '📥 Cobrado', value: fmt(collectedToday), color: 'var(--success)' },
+              { label: '📊 Por cobrar', value: fmt(pendingToCollect > 0 ? pendingToCollect : 0), color: 'var(--warning)' },
+              { label: '🎯 Meta del día', value: fmt(dailyGoal), color: 'var(--info)' },
+            ].map((metric) => (
+              <div key={metric.label} style={{
+                background: 'var(--bg-secondary)',
+                borderRadius: 16,
+                padding: '12px 14px',
+              }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>{metric.label}</p>
+                <p style={{
+                  fontFamily: 'DM Mono',
+                  fontWeight: 700,
+                  fontSize: 18,
+                  color: metric.color,
+                  lineHeight: 1,
+                }}>
+                  {metric.value}
+                </p>
+                <p style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{currency}</p>
+              </div>
+            ))}
           </div>
 
           {/* Barra de progreso */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-gray-400 text-xs">Clientes visitados</p>
-              <p className="text-white text-xs font-semibold">
+            <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>Clientes visitados</p>
+              <p style={{ color: 'var(--text-primary)', fontSize: 12, fontWeight: 700 }}>
                 {clientsPaidToday}/{totalClients} ({progressPercent}%)
               </p>
             </div>
-            <div className="bg-gray-700 rounded-full h-3 overflow-hidden">
-              <div
-                className="h-3 rounded-full transition-all duration-500"
-                style={{
-                  width: `${progressPercent}%`,
-                  background: progressPercent === 100
-                    ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-                    : 'linear-gradient(90deg, #6366f1, #8b5cf6)',
-                }}
-              />
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 99, height: 10, overflow: 'hidden' }}>
+              <div style={{
+                height: 10,
+                borderRadius: 99,
+                width: `${progressPercent}%`,
+                background: progressPercent === 100
+                  ? 'linear-gradient(90deg, #059669, #10b981)'
+                  : 'var(--gradient-primary)',
+                boxShadow: progressPercent > 0 ? '0 0 10px var(--neon-glow)' : 'none',
+                transition: 'width 0.5s ease',
+              }} />
             </div>
-            <div className="flex justify-between mt-1">
-              <p className="text-gray-600 text-xs">Pagados: {clientsPaidToday}</p>
-              <p className="text-gray-600 text-xs">Pendientes: {totalClients - clientsPaidToday}</p>
+            <div className="flex justify-between" style={{ marginTop: 6 }}>
+              <p style={{ color: 'var(--success)', fontSize: 11 }}>✓ {clientsPaidToday} pagados</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 11 }}>{totalClients - clientsPaidToday} pendientes</p>
             </div>
           </div>
         </div>
 
         {/* Lista de clientes */}
-        <div className="px-4 mb-3">
-          <p className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-2">
+        <div style={{ padding: '0 16px 100px' }}>
+          <p style={{
+            color: 'var(--text-muted)',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            marginBottom: 10,
+          }}>
             Clientes de hoy
           </p>
-          <div className="space-y-2">
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {clients.map((client: any) => {
               const activeCredit = client.credits?.find((c: any) =>
                 ['ACTIVE', 'CURRENT', 'WATCH', 'WARNING', 'CRITICAL'].includes(c.status)
@@ -205,87 +269,128 @@ export default function CobradorDashboard({ data }: { data: any }) {
               const paid = todayPaidClientIds.includes(client.id)
 
               return (
-                <Link
-                  key={client.id}
-                  href={`/cobrador/cliente/${client.id}`}
-                  className={`flex items-center justify-between rounded-2xl px-4 py-3 transition active:scale-98 ${
-                    paid
-                      ? 'bg-green-500/10 border border-green-500/20'
-                      : 'bg-gray-900 border border-gray-800 hover:border-gray-700'
-                  }`}
+                <Link key={client.id} href={`/cobrador/cliente/${client.id}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: paid ? 'rgba(16,185,129,0.08)' : 'var(--bg-card)',
+                    border: `1px solid ${paid ? 'rgba(16,185,129,0.3)' : 'var(--border)'}`,
+                    borderRadius: 18,
+                    padding: '14px 16px',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s',
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${
-                      paid ? 'bg-green-500/20 text-green-400' : 'bg-gray-800 text-gray-400'
-                    }`}>
+                    <div style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 12,
+                      background: paid ? 'rgba(16,185,129,0.2)' : 'var(--bg-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: 14,
+                      color: paid ? 'var(--success)' : 'var(--text-muted)',
+                      flexShrink: 0,
+                    }}>
                       {client.visit_order}
                     </div>
                     <div>
-                      <p className={`font-semibold text-sm ${paid ? 'text-green-400' : 'text-white'}`}>
-                        {client.full_name}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p style={{
+                          fontWeight: 600,
+                          fontSize: 14,
+                          color: paid ? 'var(--success)' : 'var(--text-primary)',
+                        }}>
+                          {client.full_name}
+                        </p>
+                        {activeCredit && (
+                          <span style={{ fontSize: 12 }}>{creditStatusEmoji[activeCredit.status]}</span>
+                        )}
+                      </div>
                       {activeCredit && (
-                        <p className="text-gray-500 text-xs">
-                          {creditStatusEmoji[activeCredit.status]} Cuota: {Number(activeCredit.installment_amount).toLocaleString()}
+                        <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                          Cuota: {Number(activeCredit.installment_amount).toFixed(0)}
                         </p>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {paid && <span className="text-green-400 text-xs font-semibold">✓ Pagado</span>}
-                    <span className="text-gray-600 text-xs">→</span>
+                    {paid && (
+                      <span style={{
+                        background: 'rgba(16,185,129,0.15)',
+                        color: 'var(--success)',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: '3px 10px',
+                        borderRadius: 99,
+                        border: '1px solid rgba(16,185,129,0.3)',
+                      }}>
+                        ✓ Pagado
+                      </span>
+                    )}
+                    <span style={{ color: 'var(--text-muted)', fontSize: 16 }}>›</span>
                   </div>
                 </Link>
               )
             })}
 
             {clients.length === 0 && (
-              <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center">
-                <p className="text-3xl mb-2">🎉</p>
-                <p className="text-gray-400 text-sm">No hay clientes activos en esta ruta.</p>
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: 20,
+                padding: 40,
+                textAlign: 'center',
+              }}>
+                <p style={{ fontSize: 40, marginBottom: 12 }}>🎉</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No hay clientes activos.</p>
               </div>
             )}
           </div>
         </div>
-
       </div>
 
-      {/* Botones inferiores — barra fija */}
-      <div className="bg-gray-900 border-t border-gray-800 px-4 py-3 safe-bottom">
-        <div className="grid grid-cols-4 gap-2">
+      {/* Barra inferior */}
+      <div style={{
+        background: 'var(--bg-secondary)',
+        borderTop: '1px solid var(--border)',
+        padding: '12px 16px',
+        paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+        position: 'sticky',
+        bottom: 0,
+      }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
           {[
             { icon: '📋', label: 'Listado', href: '/cobrador/listado' },
-            { icon: '👤', label: 'Nuevo cliente', href: '/cobrador/nuevo-cliente' },
-            { icon: '💳', label: 'Nuevo crédito', href: '/cobrador/nuevo-credito' },
+            { icon: '👤', label: 'Cliente', href: '/cobrador/nuevo-cliente' },
             { icon: '🔍', label: 'Consultas', href: '/cobrador/consultas' },
             { icon: '📦', label: 'Cierre', href: '/cobrador/cierre' },
           ].map((btn) => (
-            <Link
-              key={btn.label}
-              href={btn.href}
-              className="bg-gray-800 hover:bg-gray-700 rounded-2xl p-3 text-center transition active:scale-95 block"
+            <Link key={btn.label} href={btn.href}
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: 14,
+                padding: '10px 6px',
+                textAlign: 'center',
+                textDecoration: 'none',
+                display: 'block',
+                transition: 'all 0.2s',
+              }}
             >
-              <p className="text-xl mb-1">{btn.icon}</p>
-              <p className="text-gray-300 text-xs font-medium leading-tight">{btn.label}</p>
+              <p style={{ fontSize: 20, marginBottom: 2 }}>{btn.icon}</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 10, fontWeight: 600 }}>{btn.label}</p>
             </Link>
           ))}
         </div>
       </div>
 
-      {/* Modales */}
-      {showGastos && (
-        <GastoModal
-          routeId={route.id}
-          onClose={() => setShowGastos(false)}
-        />
-      )}
-
-      {showTotalizar && (
-        <TotalizarModal
-          data={data}
-          onClose={() => setShowTotalizar(false)}
-        />
-      )}
+      {showGastos && <GastoModal routeId={route.id} onClose={() => setShowGastos(false)} />}
+      {showTotalizar && <TotalizarModal data={data} onClose={() => setShowTotalizar(false)} />}
 
     </main>
   )

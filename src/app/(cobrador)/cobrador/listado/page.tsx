@@ -3,25 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
 const creditStatusEmoji: Record<string, string> = {
-  ACTIVE: '🟢',
-  CURRENT: '🟢',
-  WATCH: '🟡',
-  WARNING: '🟠',
-  CRITICAL: '🔴',
-  CLOSED: '⚫',
-  REFINANCED: '🔵',
-  WRITTEN_OFF: '⚫',
-}
-
-const creditStatusLabels: Record<string, string> = {
-  ACTIVE: 'Activo',
-  CURRENT: 'Al día',
-  WATCH: 'Atención',
-  WARNING: 'Advertencia',
-  CRITICAL: 'Crítico',
-  CLOSED: 'Cerrado',
-  REFINANCED: 'Refinanciado',
-  WRITTEN_OFF: 'Incobrable',
+  ACTIVE: '🟢', CURRENT: '🟢', WATCH: '🟡',
+  WARNING: '🟠', CRITICAL: '🔴',
 }
 
 export default async function ListadoPage() {
@@ -30,7 +13,6 @@ export default async function ListadoPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Obtener ruta del cobrador
   const { data: route } = await supabase
     .from('routes')
     .select('id, name')
@@ -40,7 +22,6 @@ export default async function ListadoPage() {
 
   if (!route) redirect('/cobrador')
 
-  // Obtener TODOS los clientes de la ruta
   const { data: clients } = await supabase
     .from('clients')
     .select(`
@@ -52,7 +33,6 @@ export default async function ListadoPage() {
     .is('deleted_at', null)
     .order('visit_order', { ascending: true })
 
-  // Pagos de hoy
   const today = new Date().toISOString().split('T')[0]
   const { data: todayPayments } = await supabase
     .from('payments')
@@ -62,51 +42,79 @@ export default async function ListadoPage() {
     .is('deleted_at', null)
 
   const paidClientIds = new Set(todayPayments?.map((p) => p.client_id) ?? [])
-
   const activeClients = clients?.filter((c) => c.status === 'ACTIVE') ?? []
   const inactiveClients = clients?.filter((c) => c.status !== 'ACTIVE') ?? []
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
 
-      <header className="bg-gray-900 border-b border-gray-800 px-4 py-3">
+      <header style={{
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border)',
+        padding: '14px 16px',
+        position: 'sticky', top: 0, zIndex: 50,
+      }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/cobrador" className="text-gray-400 text-sm">← Atrás</Link>
-            <span className="text-gray-600">/</span>
-            <span className="text-white font-semibold text-sm">Listado general</span>
+            <Link href="/cobrador" style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 12, padding: '8px 14px',
+              color: 'var(--text-secondary)', fontSize: 13,
+              fontWeight: 600, textDecoration: 'none',
+            }}>
+              ← Atrás
+            </Link>
+            <h1 style={{
+              fontFamily: 'Syne', fontWeight: 700,
+              fontSize: 16, color: 'var(--text-primary)',
+            }}>
+              Listado general
+            </h1>
           </div>
-          <span className="text-gray-400 text-xs">{route.name}</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{route.name}</span>
         </div>
       </header>
 
-      <div className="px-4 py-4 pb-8">
+      <div style={{ padding: '16px 16px 100px' }}>
 
         {/* Resumen */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-gray-900 rounded-2xl p-3 border border-gray-800 text-center">
-            <p className="text-2xl font-bold text-white">{clients?.length ?? 0}</p>
-            <p className="text-gray-500 text-xs">Total</p>
-          </div>
-          <div className="bg-gray-900 rounded-2xl p-3 border border-gray-800 text-center">
-            <p className="text-2xl font-bold text-green-400">{paidClientIds.size}</p>
-            <p className="text-gray-500 text-xs">Pagaron hoy</p>
-          </div>
-          <div className="bg-gray-900 rounded-2xl p-3 border border-gray-800 text-center">
-            <p className="text-2xl font-bold text-yellow-400">
-              {activeClients.length - paidClientIds.size}
-            </p>
-            <p className="text-gray-500 text-xs">Pendientes</p>
-          </div>
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+          gap: 10, marginBottom: 20,
+        }}>
+          {[
+            { label: 'Total', value: clients?.length ?? 0, color: 'var(--text-primary)' },
+            { label: 'Pagaron', value: paidClientIds.size, color: 'var(--success)' },
+            { label: 'Pendientes', value: activeClients.length - paidClientIds.size, color: 'var(--warning)' },
+          ].map((stat) => (
+            <div key={stat.label} style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 16, padding: 14, textAlign: 'center',
+            }}>
+              <p style={{
+                fontFamily: 'DM Mono', fontWeight: 800,
+                fontSize: 26, color: stat.color,
+              }}>
+                {stat.value}
+              </p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>{stat.label}</p>
+            </div>
+          ))}
         </div>
 
         {/* Clientes activos */}
         {activeClients.length > 0 && (
-          <div className="mb-6">
-            <p className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-3">
+          <div style={{ marginBottom: 24 }}>
+            <p style={{
+              color: 'var(--text-muted)', fontSize: 11,
+              fontWeight: 700, letterSpacing: '0.08em',
+              textTransform: 'uppercase', marginBottom: 10,
+            }}>
               Clientes activos ({activeClients.length})
             </p>
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {activeClients.map((client: any) => {
                 const activeCredit = client.credits?.find((c: any) =>
                   ['ACTIVE', 'CURRENT', 'WATCH', 'WARNING', 'CRITICAL'].includes(c.status)
@@ -115,56 +123,61 @@ export default async function ListadoPage() {
                 const todayPayment = todayPayments?.find((p) => p.client_id === client.id)
 
                 return (
-                  <Link
-                    key={client.id}
-                    href={`/cobrador/cliente/${client.id}`}
-                    className={`block rounded-2xl p-4 border transition active:scale-98 ${
-                      paid
-                        ? 'bg-green-500/10 border-green-500/20'
-                        : 'bg-gray-900 border-gray-800 hover:border-gray-700'
-                    }`}
+                  <Link key={client.id} href={`/cobrador/cliente/${client.id}`}
+                    style={{
+                      background: paid ? 'rgba(16,185,129,0.08)' : 'var(--bg-card)',
+                      border: `1px solid ${paid ? 'rgba(16,185,129,0.25)' : 'var(--border)'}`,
+                      borderRadius: 18, padding: '14px 16px',
+                      textDecoration: 'none', display: 'block',
+                    }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                          paid ? 'bg-green-500/20 text-green-400' : 'bg-gray-800 text-gray-400'
-                        }`}>
+                        <div style={{
+                          width: 36, height: 36, borderRadius: 12,
+                          background: paid ? 'rgba(16,185,129,0.2)' : 'var(--bg-secondary)',
+                          display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', fontWeight: 700,
+                          fontSize: 14, color: paid ? 'var(--success)' : 'var(--text-muted)',
+                          flexShrink: 0,
+                        }}>
                           {client.visit_order}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className={`font-semibold text-sm ${paid ? 'text-green-400' : 'text-white'}`}>
+                            <p style={{
+                              fontWeight: 600, fontSize: 14,
+                              color: paid ? 'var(--success)' : 'var(--text-primary)',
+                            }}>
                               {client.full_name}
                             </p>
                             {activeCredit && (
-                              <span className="text-xs">{creditStatusEmoji[activeCredit.status]}</span>
+                              <span style={{ fontSize: 12 }}>
+                                {creditStatusEmoji[activeCredit.status]}
+                              </span>
                             )}
                           </div>
-                          <p className="text-gray-500 text-xs">
-                            Doc: {client.document_number}
-                          </p>
                           {activeCredit && (
-                            <p className="text-gray-400 text-xs">
-                              Cuota: {Number(activeCredit.installment_amount).toLocaleString()} ·{' '}
-                              {activeCredit.paid_installments}/{activeCredit.installments}
+                            <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                              Cuota: {Number(activeCredit.installment_amount).toFixed(0)} · {activeCredit.paid_installments}/{activeCredit.installments}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         {paid && todayPayment ? (
                           <div>
-                            <p className="text-green-400 text-xs font-semibold">✓ Pagado</p>
-                            <p className="text-green-400 text-xs">
-                              {Number(todayPayment.amount).toLocaleString()}
+                            <p style={{ color: 'var(--success)', fontSize: 11, fontWeight: 700 }}>✓ Pagado</p>
+                            <p style={{ fontFamily: 'DM Mono', color: 'var(--success)', fontSize: 13, fontWeight: 700 }}>
+                              {Number(todayPayment.amount).toFixed(0)}
                             </p>
                           </div>
                         ) : activeCredit ? (
                           <div>
-                            <p className="text-white text-sm font-bold">
-                              {Number(activeCredit.installment_amount).toLocaleString()}
+                            <p style={{ fontFamily: 'DM Mono', fontWeight: 700, fontSize: 15, color: 'var(--neon-bright)' }}>
+                              {Number(activeCredit.installment_amount).toFixed(0)}
                             </p>
-                            <p className="text-gray-500 text-xs">por cobrar</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: 11 }}>por cobrar</p>
                           </div>
                         ) : null}
                       </div>
@@ -179,28 +192,47 @@ export default async function ListadoPage() {
         {/* Clientes inactivos */}
         {inactiveClients.length > 0 && (
           <div>
-            <p className="text-gray-600 text-xs font-semibold uppercase tracking-wide mb-3">
+            <p style={{
+              color: 'var(--text-muted)', fontSize: 11,
+              fontWeight: 700, letterSpacing: '0.08em',
+              textTransform: 'uppercase', marginBottom: 10,
+            }}>
               Sin crédito activo ({inactiveClients.length})
             </p>
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {inactiveClients.map((client: any) => (
-                <Link
-                  key={client.id}
-                  href={`/cobrador/cliente/${client.id}`}
-                  className="block bg-gray-900/50 rounded-2xl p-3 border border-gray-800/50 transition"
+                <Link key={client.id} href={`/cobrador/cliente/${client.id}`}
+                  style={{
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 16, padding: '12px 14px',
+                    textDecoration: 'none', display: 'block',
+                    opacity: 0.7,
+                  }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center text-xs text-gray-600 font-bold flex-shrink-0">
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 10,
+                        background: 'var(--bg-secondary)',
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', fontSize: 12,
+                        color: 'var(--text-muted)', fontWeight: 700,
+                        flexShrink: 0,
+                      }}>
                         {client.visit_order}
                       </div>
                       <div>
-                        <p className="text-gray-500 text-sm">{client.full_name}</p>
-                        <p className="text-gray-600 text-xs">Doc: {client.document_number}</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                          {client.full_name}
+                        </p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 11 }}>
+                          Doc: {client.document_number}
+                        </p>
                       </div>
                     </div>
                     {client.status === 'BLACKLISTED' && (
-                      <span className="text-red-400 text-xs">⚠️ Incobrable</span>
+                      <span style={{ color: 'var(--danger)', fontSize: 12 }}>⚠️ Incobrable</span>
                     )}
                   </div>
                 </Link>
@@ -209,20 +241,26 @@ export default async function ListadoPage() {
           </div>
         )}
 
-        {/* Sin clientes */}
         {(!clients || clients.length === 0) && (
-          <div className="text-center py-12">
-            <p className="text-4xl mb-3">👥</p>
-            <p className="text-gray-400 text-sm">No hay clientes en esta ruta todavía.</p>
-            <Link
-              href="/cobrador/nuevo-cliente"
-              className="inline-block mt-4 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"
-            >
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 20, padding: 48, textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 40, marginBottom: 12 }}>👥</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>
+              No hay clientes en esta ruta.
+            </p>
+            <Link href="/cobrador/nuevo-cliente" style={{
+              background: 'var(--gradient-primary)',
+              borderRadius: 14, padding: '12px 24px',
+              color: 'white', fontSize: 14, fontWeight: 700,
+              textDecoration: 'none',
+            }}>
               + Crear primer cliente
             </Link>
           </div>
         )}
-
       </div>
     </main>
   )

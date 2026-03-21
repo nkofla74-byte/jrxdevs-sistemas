@@ -1,11 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCashClosings } from '@/modules/cash-closing/actions'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
+import PageHeader from '@/components/shared/PageHeader'
 import RouteFilter from '@/components/shared/RouteFilter'
 
-function formatCurrency(amount: number) {
-  return Number(amount).toLocaleString()
+function fmt(n: number) {
+  return Number(n).toLocaleString('es-CO')
 }
 
 export default async function CierresPage({
@@ -38,16 +38,25 @@ export default async function CierresPage({
   const { data: closings, error } = await getCashClosings(tenantId, searchParams.ruta)
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
 
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/admin" className="text-gray-400 hover:text-white transition text-sm">
-              ← Dashboard
-            </Link>
-            <span className="text-gray-600">/</span>
-            <span className="text-white font-semibold">Cierres de caja</span>
+      <PageHeader
+        title="Cierres de caja"
+        backHref="/admin"
+        backLabel="← Inicio"
+      />
+
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 16px' }}>
+
+        <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
+          <div>
+            <h1 style={{
+              fontFamily: 'Syne', fontWeight: 800, fontSize: 24,
+              color: 'var(--text-primary)', marginBottom: 4,
+            }}>Cierres de caja</h1>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+              Últimos 60 cierres
+            </p>
           </div>
           <RouteFilter
             routes={routes ?? []}
@@ -55,85 +64,84 @@ export default async function CierresPage({
             basePath="/admin/cierres"
           />
         </div>
-      </header>
-
-      <div className="max-w-6xl mx-auto px-6 py-8">
-
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Cierres de caja</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Historial de los últimos 60 cierres
-          </p>
-        </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div style={{
+            background: 'var(--danger-dim)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 14, padding: '12px 16px', marginBottom: 16,
+          }}>
+            <p style={{ color: 'var(--danger)', fontSize: 13 }}>{error}</p>
           </div>
         )}
 
         {closings && closings.length > 0 ? (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {closings.map((closing: any) => (
-              <div
-                key={closing.id}
-                className="bg-gray-900 rounded-2xl p-5 border border-gray-800"
-              >
+              <div key={closing.id} style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: 20, padding: 16,
+              }}>
                 {/* Header */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
                   <div>
-                    <p className="font-semibold text-white">
+                    <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
                       {new Date(closing.closing_date).toLocaleDateString('es-CO', {
-                        weekday: 'long',
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric',
+                        weekday: 'long', day: '2-digit', month: 'long',
                       })}
                     </p>
-                    <p className="text-gray-400 text-sm">📍 {closing.route?.name}</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>
+                      📍 {closing.route?.name}
+                    </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Total a entregar</p>
-                    <p className={`text-xl font-bold ${
-                      Number(closing.total_to_deliver) >= 0
-                        ? 'text-green-400'
-                        : 'text-red-400'
-                    }`}>
-                      {formatCurrency(closing.total_to_deliver)}
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 11 }}>Total a entregar</p>
+                    <p style={{
+                      fontFamily: 'DM Mono', fontWeight: 800, fontSize: 22,
+                      color: Number(closing.total_to_deliver) >= 0
+                        ? 'var(--success)' : 'var(--danger)',
+                    }}>
+                      {fmt(closing.total_to_deliver)}
                     </p>
                   </div>
                 </div>
 
                 {/* Detalle */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="bg-gray-800 rounded-xl p-3">
-                    <p className="text-gray-500 text-xs mb-1">Capital base</p>
-                    <p className="text-white font-semibold text-sm">
-                      {formatCurrency(closing.base_amount)}
-                    </p>
-                  </div>
-                  <div className="bg-gray-800 rounded-xl p-3">
-                    <p className="text-gray-500 text-xs mb-1">Cobrado</p>
-                    <p className="text-green-400 font-semibold text-sm">
-                      +{formatCurrency(closing.collected_amount)}
-                    </p>
-                  </div>
-                  <div className="bg-gray-800 rounded-xl p-3">
-                    <p className="text-gray-500 text-xs mb-1">Prestado</p>
-                    <p className="text-red-400 font-semibold text-sm">
-                      -{formatCurrency(closing.loaned_amount)}
-                    </p>
-                  </div>
-                  <div className="bg-gray-800 rounded-xl p-3">
-                    <p className="text-gray-500 text-xs mb-1">Gastos</p>
-                    <p className="text-yellow-400 font-semibold text-sm">
-                      -{formatCurrency(closing.expenses_amount)}
-                    </p>
-                  </div>
+                <div style={{
+                  display: 'grid', gridTemplateColumns: '1fr 1fr',
+                  gap: 8,
+                }}>
+                  {[
+                    { label: 'Capital base', value: fmt(closing.base_amount), color: 'var(--text-primary)' },
+                    { label: '+ Cobrado', value: `+${fmt(closing.collected_amount)}`, color: 'var(--success)' },
+                    { label: '- Prestado', value: `-${fmt(closing.loaned_amount)}`, color: 'var(--danger)' },
+                    { label: '- Gastos', value: `-${fmt(closing.expenses_amount)}`, color: 'var(--warning)' },
+                  ].map((item) => (
+                    <div key={item.label} style={{
+                      background: 'var(--bg-secondary)',
+                      borderRadius: 12, padding: 10,
+                    }}>
+                      <p style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 2 }}>
+                        {item.label}
+                      </p>
+                      <p style={{
+                        fontFamily: 'DM Mono', fontWeight: 700,
+                        fontSize: 14, color: item.color,
+                      }}>
+                        {item.value}
+                      </p>
+                    </div>
+                  ))}
                 </div>
 
                 {closing.notes && (
-                  <p className="text-gray-500 text-xs mt-3">
+                  <p style={{
+                    color: 'var(--text-muted)', fontSize: 12,
+                    marginTop: 10, padding: '8px 12px',
+                    background: 'var(--bg-secondary)',
+                    borderRadius: 10,
+                  }}>
                     📝 {closing.notes}
                   </p>
                 )}
@@ -141,10 +149,16 @@ export default async function CierresPage({
             ))}
           </div>
         ) : (
-          <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800 text-center">
-            <p className="text-4xl mb-4">📊</p>
-            <p className="text-gray-400">No hay cierres de caja registrados todavía.</p>
-            <p className="text-gray-500 text-sm mt-2">
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 20, padding: 48, textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 40, marginBottom: 12 }}>📊</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 8 }}>
+              No hay cierres registrados todavía.
+            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
               Los cierres los realiza el cobrador al finalizar su jornada.
             </p>
           </div>

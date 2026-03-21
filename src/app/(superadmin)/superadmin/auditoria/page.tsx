@@ -1,36 +1,31 @@
 import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
+import PageHeader from '@/components/shared/PageHeader'
 
-const actionColors: Record<string, string> = {
-  LOGIN_EXITOSO: 'text-green-400 bg-green-500/10 border-green-500/20',
-  LOGIN_FALLIDO: 'text-red-400 bg-red-500/10 border-red-500/20',
-  LOGOUT: 'text-gray-400 bg-gray-500/10 border-gray-500/20',
-  SESION_BLOQUEADA: 'text-red-400 bg-red-500/10 border-red-500/20',
-  OFICINA_CREADA: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
-  OFICINA_CONGELADA: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-  OFICINA_ACTIVADA: 'text-green-400 bg-green-500/10 border-green-500/20',
-  OFICINA_ELIMINADA: 'text-red-400 bg-red-500/10 border-red-500/20',
-  RUTA_CREADA: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
-  RUTA_ELIMINADA: 'text-red-400 bg-red-500/10 border-red-500/20',
-  ADMIN_CREADO: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
-  PAGO_REGISTRADO: 'text-green-400 bg-green-500/10 border-green-500/20',
-  PAGO_EDITADO: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
-  CREDITO_CREADO: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
-  CREDITO_ELIMINADO: 'text-red-400 bg-red-500/10 border-red-500/20',
-  CAPITAL_INYECTADO: 'text-green-400 bg-green-500/10 border-green-500/20',
-  CAPITAL_RETIRADO: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+const actionColors: Record<string, { bg: string; color: string; border: string }> = {
+  LOGIN_EXITOSO: { bg: 'rgba(16,185,129,0.1)', color: '#10b981', border: 'rgba(16,185,129,0.2)' },
+  LOGIN_FALLIDO: { bg: 'var(--danger-dim)', color: 'var(--danger)', border: 'rgba(239,68,68,0.2)' },
+  LOGOUT: { bg: 'var(--bg-secondary)', color: 'var(--text-muted)', border: 'var(--border)' },
+  SESION_BLOQUEADA: { bg: 'var(--danger-dim)', color: 'var(--danger)', border: 'rgba(239,68,68,0.2)' },
+  OFICINA_CREADA: { bg: 'rgba(139,92,246,0.1)', color: 'var(--neon-bright)', border: 'rgba(139,92,246,0.2)' },
+  OFICINA_CONGELADA: { bg: 'rgba(99,102,241,0.1)', color: 'var(--info)', border: 'rgba(99,102,241,0.2)' },
+  OFICINA_ACTIVADA: { bg: 'rgba(16,185,129,0.1)', color: 'var(--success)', border: 'rgba(16,185,129,0.2)' },
+  OFICINA_ELIMINADA: { bg: 'var(--danger-dim)', color: 'var(--danger)', border: 'rgba(239,68,68,0.2)' },
+  RUTA_CREADA: { bg: 'rgba(139,92,246,0.1)', color: 'var(--neon-bright)', border: 'rgba(139,92,246,0.2)' },
+  RUTA_ELIMINADA: { bg: 'var(--danger-dim)', color: 'var(--danger)', border: 'rgba(239,68,68,0.2)' },
+  ADMIN_CREADO: { bg: 'rgba(139,92,246,0.1)', color: 'var(--neon-bright)', border: 'rgba(139,92,246,0.2)' },
+  PAGO_REGISTRADO: { bg: 'rgba(16,185,129,0.1)', color: 'var(--success)', border: 'rgba(16,185,129,0.2)' },
+  PAGO_EDITADO: { bg: 'rgba(245,158,11,0.1)', color: 'var(--warning)', border: 'rgba(245,158,11,0.2)' },
+  CREDITO_CREADO: { bg: 'rgba(139,92,246,0.1)', color: 'var(--neon-bright)', border: 'rgba(139,92,246,0.2)' },
+  CREDITO_ELIMINADO: { bg: 'var(--danger-dim)', color: 'var(--danger)', border: 'rgba(239,68,68,0.2)' },
+  CAPITAL_INYECTADO: { bg: 'rgba(16,185,129,0.1)', color: 'var(--success)', border: 'rgba(16,185,129,0.2)' },
+  CAPITAL_RETIRADO: { bg: 'rgba(245,158,11,0.1)', color: 'var(--warning)', border: 'rgba(245,158,11,0.2)' },
 }
 
 function formatDate(dateString: string) {
-  const date = new Date(dateString)
   return new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(date)
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  }).format(new Date(dateString))
 }
 
 export default async function AuditoriaPage() {
@@ -38,91 +33,110 @@ export default async function AuditoriaPage() {
 
   const { data: logs, error } = await supabase
     .from('audit_logs')
-    .select(`
-      *,
-      user:users(id, full_name, email, role)
-    `)
+    .select('*, user:users(id, full_name, email, role)')
     .order('created_at', { ascending: false })
     .limit(100)
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
 
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center gap-3">
-          <Link href="/superadmin" className="text-gray-400 hover:text-white transition text-sm">
-            ← Dashboard
-          </Link>
-          <span className="text-gray-600">/</span>
-          <span className="text-white font-semibold">Auditoría</span>
-        </div>
-      </header>
+      <PageHeader
+        title="Auditoría"
+        backHref="/superadmin"
+        backLabel="← Inicio"
+      />
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 16px' }}>
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Auditoría</h1>
-          <p className="text-gray-400 text-sm mt-1">
+        <div style={{ marginBottom: 20 }}>
+          <h1 style={{
+            fontFamily: 'Syne', fontWeight: 800, fontSize: 24,
+            color: 'var(--text-primary)', marginBottom: 4,
+          }}>Auditoría</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
             Últimas 100 acciones del sistema
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div style={{
+            background: 'var(--danger-dim)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 14, padding: '12px 16px', marginBottom: 16,
+          }}>
+            <p style={{ color: 'var(--danger)', fontSize: 13 }}>{error}</p>
           </div>
         )}
 
         {logs && logs.length > 0 ? (
-          <div className="space-y-2">
-            {logs.map((log: any) => (
-              <div
-                key={log.id}
-                className="bg-gray-900 rounded-xl p-4 border border-gray-800 flex items-start justify-between gap-4"
-              >
-                <div className="flex items-start gap-3">
-
-                  {/* Acción */}
-                  <span className={`text-xs px-2.5 py-1 rounded-full border whitespace-nowrap ${
-                    actionColors[log.action] ?? 'text-gray-400 bg-gray-500/10 border-gray-500/20'
-                  }`}>
-                    {log.action}
-                  </span>
-
-                  {/* Info */}
-                  <div>
-                    <p className="text-white text-sm">
-                      {log.user?.full_name ?? 'Sistema'}
-                      <span className="text-gray-500 text-xs ml-2">
-                        {log.user?.email}
-                      </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {logs.map((log: any) => {
+              const colors = actionColors[log.action] ?? {
+                bg: 'var(--bg-secondary)',
+                color: 'var(--text-muted)',
+                border: 'var(--border)',
+              }
+              return (
+                <div key={log.id} style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 16, padding: 14,
+                }}>
+                  <div className="flex items-start justify-between gap-3" style={{ marginBottom: 8 }}>
+                    <span style={{
+                      background: colors.bg,
+                      color: colors.color,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: 99, padding: '3px 10px',
+                      fontSize: 11, fontWeight: 700,
+                      whiteSpace: 'nowrap', flexShrink: 0,
+                    }}>
+                      {log.action}
+                    </span>
+                    <p style={{
+                      color: 'var(--text-muted)', fontSize: 11,
+                      whiteSpace: 'nowrap', flexShrink: 0,
+                    }}>
+                      {formatDate(log.created_at)}
                     </p>
-                    <p className="text-gray-500 text-xs mt-0.5">
-                      {log.entity} · {log.entity_id?.substring(0, 8)}...
-                    </p>
-                    {log.data_after && (
-                      <p className="text-gray-600 text-xs mt-1 font-mono">
-                        {JSON.stringify(log.data_after).substring(0, 80)}
-                        {JSON.stringify(log.data_after).length > 80 ? '...' : ''}
-                      </p>
-                    )}
                   </div>
+                  <p style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 600 }}>
+                    {log.user?.full_name ?? 'Sistema'}
+                  </p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                    {log.user?.email}
+                  </p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>
+                    {log.entity} · {log.entity_id?.substring(0, 8)}...
+                  </p>
+                  {log.data_after && (
+                    <p style={{
+                      color: 'var(--text-muted)', fontSize: 11,
+                      fontFamily: 'DM Mono', marginTop: 6,
+                      background: 'var(--bg-secondary)',
+                      borderRadius: 8, padding: '6px 10px',
+                      wordBreak: 'break-all',
+                    }}>
+                      {JSON.stringify(log.data_after).substring(0, 100)}
+                      {JSON.stringify(log.data_after).length > 100 ? '...' : ''}
+                    </p>
+                  )}
                 </div>
-
-                {/* Fecha */}
-                <p className="text-gray-500 text-xs whitespace-nowrap">
-                  {formatDate(log.created_at)}
-                </p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
-          <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800 text-center">
-            <p className="text-4xl mb-4">📋</p>
-            <p className="text-gray-400">No hay registros de auditoría todavía.</p>
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 20, padding: 48, textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 40, marginBottom: 12 }}>📋</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+              No hay registros de auditoría todavía.
+            </p>
           </div>
         )}
-
       </div>
     </main>
   )
