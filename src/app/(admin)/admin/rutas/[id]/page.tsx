@@ -1,6 +1,7 @@
 import { getRouteDashboard } from '@/modules/offices/admin-actions'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import ResetDeviceButton from '@/components/shared/ResetDeviceButton'
 
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat('es-CO', {
@@ -24,135 +25,157 @@ export default async function AdminRouteDashboard({
     criticalClients, watchClients } = data
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
 
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/admin" className="text-gray-400 hover:text-white transition text-sm">
-              ← Dashboard
+      <header style={{
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border)',
+        padding: '14px 16px',
+        position: 'sticky', top: 0, zIndex: 50,
+      }}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href="/admin" style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 12, padding: '8px 14px',
+              color: 'var(--text-secondary)', fontSize: 13,
+              fontWeight: 600, textDecoration: 'none',
+              whiteSpace: 'nowrap', flexShrink: 0,
+            }}>
+              ← Inicio
             </Link>
-            <span className="text-gray-600">/</span>
-            <span className="text-white font-semibold">{route.name}</span>
+            <div style={{ minWidth: 0 }}>
+              <p style={{
+                fontFamily: 'Syne', fontWeight: 700, fontSize: 15,
+                color: 'var(--text-primary)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>
+                {route.name}
+              </p>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                background: route.status === 'active'
+                  ? 'rgba(16,185,129,0.15)'
+                  : 'var(--bg-secondary)',
+                border: `1px solid ${route.status === 'active'
+                  ? 'rgba(16,185,129,0.3)' : 'var(--border)'}`,
+                borderRadius: 99, padding: '2px 8px',
+                fontSize: 11, fontWeight: 700,
+                color: route.status === 'active' ? 'var(--success)' : 'var(--text-muted)',
+              }}>
+                {route.status === 'active' ? '● Activa' : '○ Inactiva'}
+              </span>
+            </div>
           </div>
-          <span className={`text-xs px-2.5 py-1 rounded-full border ${
-            route.status === 'active'
-              ? 'bg-green-500/10 text-green-400 border-green-500/20'
-              : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-          }`}>
-            {route.status === 'active' ? 'Activa' : 'Inactiva'}
-          </span>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
-
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">{route.name}</h1>
-          <p className="text-gray-400 text-sm mt-1">Dashboard financiero de la ruta</p>
-        </div>
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '16px 16px 40px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* Alertas */}
         {criticalClients > 0 && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
-            <span className="text-2xl">🔴</span>
-            <p className="text-red-400 text-sm font-semibold">
+          <div style={{
+            background: 'var(--danger-dim)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 16, padding: '14px 16px',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <span style={{ fontSize: 20 }}>🔴</span>
+            <p style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>
               {criticalClients} cliente{criticalClients > 1 ? 's' : ''} en estado crítico — 6+ días sin pagar
             </p>
           </div>
         )}
 
         {watchClients > 0 && (
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
-            <span className="text-2xl">🟡</span>
-            <p className="text-yellow-400 text-sm font-semibold">
+          <div style={{
+            background: 'rgba(245,158,11,0.1)',
+            border: '1px solid rgba(245,158,11,0.2)',
+            borderRadius: 16, padding: '14px 16px',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <span style={{ fontSize: 20 }}>🟡</span>
+            <p style={{ color: 'var(--warning)', fontSize: 13, fontWeight: 600 }}>
               {watchClients} cliente{watchClients > 1 ? 's' : ''} con mora — requieren seguimiento
             </p>
           </div>
         )}
 
-        {/* Métricas financieras */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-gray-400 text-xs mb-1">Capital inyectado</p>
-            <p className="text-2xl font-bold text-white">
-              {formatCurrency(capitalInjected, currency)}
-            </p>
-            <p className="text-gray-500 text-xs mt-1">Total asignado a la ruta</p>
-          </div>
-
-          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-gray-400 text-xs mb-1">Dinero en calle</p>
-            <p className="text-2xl font-bold text-indigo-400">
-              {formatCurrency(totalInStreet, currency)}
-            </p>
-            <p className="text-gray-500 text-xs mt-1">Capital prestado activo</p>
-          </div>
-
-          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-gray-400 text-xs mb-1">Cobrado hoy</p>
-            <p className="text-2xl font-bold text-green-400">
-              {formatCurrency(collectedToday, currency)}
-            </p>
-            <p className="text-gray-500 text-xs mt-1">Pagos del día</p>
-          </div>
-
-          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-gray-400 text-xs mb-1">Cobrado este mes</p>
-            <p className="text-2xl font-bold text-white">
-              {formatCurrency(collectedMonth, currency)}
-            </p>
-            <p className="text-gray-500 text-xs mt-1">Acumulado del mes</p>
-          </div>
-
-          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-gray-400 text-xs mb-1">Clientes activos</p>
-            <p className="text-2xl font-bold text-white">{totalClients}</p>
-            <p className="text-gray-500 text-xs mt-1">Con crédito vigente</p>
-          </div>
-
-          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-            <p className="text-gray-400 text-xs mb-1">Por cobrar</p>
-            <p className="text-2xl font-bold text-yellow-400">
-              {formatCurrency(totalInStreet - collectedToday, currency)}
-            </p>
-            <p className="text-gray-500 text-xs mt-1">Pendiente hoy</p>
-          </div>
+        {/* Métricas */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr',
+          gap: 10,
+        }}>
+          {[
+            { label: 'Capital inyectado', value: formatCurrency(capitalInjected, currency), color: 'var(--text-primary)', icon: '🏦' },
+            { label: 'Dinero en calle', value: formatCurrency(totalInStreet, currency), color: 'var(--neon-bright)', icon: '💰' },
+            { label: 'Cobrado hoy', value: formatCurrency(collectedToday, currency), color: 'var(--success)', icon: '📥' },
+            { label: 'Cobrado este mes', value: formatCurrency(collectedMonth, currency), color: 'var(--text-primary)', icon: '📊' },
+            { label: 'Clientes activos', value: String(totalClients), color: 'var(--warning)', icon: '👥' },
+            { label: 'Por cobrar hoy', value: formatCurrency(totalInStreet - collectedToday, currency), color: 'var(--warning)', icon: '⏳' },
+          ].map((m) => (
+            <div key={m.label} style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 16, padding: 14,
+            }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: 11 }}>{m.label}</p>
+                <span style={{ fontSize: 16 }}>{m.icon}</span>
+              </div>
+              <p style={{
+                fontFamily: 'DM Mono', fontWeight: 700,
+                fontSize: 18, color: m.color,
+              }}>
+                {m.value}
+              </p>
+            </div>
+          ))}
         </div>
 
         {/* Acciones rápidas */}
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-          <h2 className="text-lg font-semibold mb-4">Acciones de la ruta</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Link
-              href={`/admin/clientes?ruta=${route.id}`}
-              className="bg-gray-800 hover:bg-gray-700 rounded-xl p-4 text-center transition block"
-            >
-              <p className="text-2xl mb-2">👥</p>
-              <p className="text-sm text-gray-300">Ver clientes</p>
-            </Link>
-            <Link
-              href={`/admin/creditos?ruta=${route.id}`}
-              className="bg-gray-800 hover:bg-gray-700 rounded-xl p-4 text-center transition block"
-            >
-              <p className="text-2xl mb-2">💳</p>
-              <p className="text-sm text-gray-300">Ver créditos</p>
-            </Link>
-            <Link
-              href={`/admin/capital?ruta=${route.id}`}
-              className="bg-gray-800 hover:bg-gray-700 rounded-xl p-4 text-center transition block"
-            >
-              <p className="text-2xl mb-2">💰</p>
-              <p className="text-sm text-gray-300">Capital</p>
-            </Link>
-            <Link
-              href={`/admin/cierres?ruta=${route.id}`}
-              className="bg-gray-800 hover:bg-gray-700 rounded-xl p-4 text-center transition block"
-            >
-              <p className="text-2xl mb-2">📊</p>
-              <p className="text-sm text-gray-300">Cierres de caja</p>
-            </Link>
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 20, padding: 16,
+        }}>
+          <p style={{
+            fontFamily: 'Syne', fontWeight: 700, fontSize: 15,
+            color: 'var(--text-primary)', marginBottom: 14,
+          }}>
+            Acciones de la ruta
+          </p>
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr',
+            gap: 10, marginBottom: 12,
+          }}>
+            {[
+              { icon: '👥', label: 'Ver clientes', href: `/admin/clientes?ruta=${route.id}` },
+              { icon: '💳', label: 'Ver créditos', href: `/admin/creditos?ruta=${route.id}` },
+              { icon: '💰', label: 'Capital', href: `/admin/capital?ruta=${route.id}` },
+              { icon: '📊', label: 'Cierres', href: `/admin/cierres?ruta=${route.id}` },
+            ].map((btn) => (
+              <Link key={btn.label} href={btn.href}
+                className="action-card"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 14, padding: '14px 12px',
+                  textAlign: 'center', textDecoration: 'none',
+                  display: 'block', transition: 'all 0.2s',
+                }}
+              >
+                <p style={{ fontSize: 24, marginBottom: 6 }}>{btn.icon}</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600 }}>
+                  {btn.label}
+                </p>
+              </Link>
+            ))}
           </div>
+
+          {/* Botón autorizar dispositivo */}
+          <ResetDeviceButton routeId={route.id} routeName={route.name} />
         </div>
 
       </div>

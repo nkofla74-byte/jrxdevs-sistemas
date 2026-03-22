@@ -2,6 +2,7 @@ import { getClientById } from '@/modules/clients/actions'
 import { deleteClientAction } from '@/modules/clients/actions'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import DeleteClientButton from '@/components/admin/DeleteClientButton'
 
 const creditStatusColors: Record<string, string> = {
   ACTIVE: 'bg-green-500/10 text-green-400 border-green-500/20',

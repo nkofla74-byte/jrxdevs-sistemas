@@ -33,44 +33,67 @@ export default async function AdminDashboard() {
         }} />
       </div>
 
-      <header style={{
+<header style={{
         background: 'var(--bg-secondary)',
         borderBottom: '1px solid var(--border)',
-        padding: '14px 20px',
+        padding: '14px 16px',
         position: 'sticky', top: 0, zIndex: 50,
       }}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div style={{
-              width: 40, height: 40, borderRadius: 14,
+              width: 40, height: 40, borderRadius: 14, flexShrink: 0,
               background: 'var(--gradient-primary)',
               boxShadow: '0 0 15px var(--neon-glow)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
             }}>
               <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 16, color: 'white' }}>
                 {tenant?.name?.charAt(0).toUpperCase()}
               </span>
             </div>
-            <div>
-              <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
+            <div style={{ minWidth: 0 }}>
+              <p style={{
+                fontFamily: 'Syne', fontWeight: 700, fontSize: 15,
+                color: 'var(--text-primary)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>
                 {tenant?.name}
               </p>
-              <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                {tenant?.country} · {currency}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  background: 'rgba(99,102,241,0.15)',
+                  border: '1px solid rgba(99,102,241,0.3)',
+                  borderRadius: 99, padding: '2px 8px',
+                }}>
+                  <span style={{ fontSize: 10 }}>🖥️</span>
+                  <span style={{ fontSize: 11, color: 'var(--info)', fontWeight: 700 }}>
+                    Administrador
+                  </span>
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  {tenant?.country} · {currency}
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>{adminName}</span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <p style={{
+              color: 'var(--text-muted)', fontSize: 12,
+              maxWidth: 100,
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              {adminName}
+            </p>
             <ThemeToggle />
             <form action="/api/auth/logout" method="POST">
               <button style={{
                 background: 'var(--danger-dim)',
                 border: '1px solid rgba(239,68,68,0.2)',
-                borderRadius: 10, padding: '6px 14px',
-                color: 'var(--danger)', fontSize: 13,
+                borderRadius: 10, padding: '6px 10px',
+                color: 'var(--danger)', fontSize: 12,
                 fontWeight: 600, cursor: 'pointer',
+                whiteSpace: 'nowrap',
               }}>
                 Salir
               </button>

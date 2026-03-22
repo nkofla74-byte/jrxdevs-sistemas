@@ -1,7 +1,7 @@
 import { getOffices } from '@/modules/offices/actions'
-import { freezeOffice, activateOffice, deleteOffice } from '@/modules/offices/actions'
 import Link from 'next/link'
 import PageHeader from '@/components/shared/PageHeader'
+import OficinaActions from '@/components/superadmin/OficinaActions'
 
 const countryNames: Record<string, string> = {
   CO: '🇨🇴 Colombia', PE: '🇵🇪 Perú',
@@ -33,6 +33,28 @@ export default async function OficinasPage() {
           </p>
         </div>
 
+        {/* Leyenda */}
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 16, padding: 14,
+          marginBottom: 20,
+          display: 'flex', flexDirection: 'column', gap: 6,
+        }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+            Guía de estados
+          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+            ✅ <strong style={{ color: 'var(--success)' }}>Activa</strong> — Opera normalmente
+          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+            ❄️ <strong style={{ color: 'var(--info)' }}>Congelada</strong> — Bloqueada por falta de pago. El admin y cobradores no pueden entrar.
+          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+            🗑️ <strong style={{ color: 'var(--danger)' }}>Eliminada</strong> — Desactivada permanentemente. Los datos se conservan.
+          </p>
+        </div>
+
         {error && (
           <div style={{
             background: 'var(--danger-dim)',
@@ -48,18 +70,22 @@ export default async function OficinasPage() {
             {offices.map((office) => (
               <div key={office.id} style={{
                 background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
+                border: `1px solid ${office.status === 'frozen' ? 'rgba(99,102,241,0.3)' : 'var(--border)'}`,
                 borderRadius: 20, padding: 16,
               }}>
                 <div className="flex items-center gap-3" style={{ marginBottom: 12 }}>
                   <div style={{
                     width: 44, height: 44, borderRadius: 14, flexShrink: 0,
-                    background: 'var(--gradient-primary)',
-                    boxShadow: '0 0 10px var(--neon-glow)',
+                    background: office.status === 'frozen'
+                      ? 'rgba(99,102,241,0.2)'
+                      : 'var(--gradient-primary)',
+                    boxShadow: office.status === 'frozen'
+                      ? 'none'
+                      : '0 0 10px var(--neon-glow)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 18, color: 'white' }}>
-                      {office.name.charAt(0).toUpperCase()}
+                      {office.status === 'frozen' ? '❄️' : office.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -73,7 +99,7 @@ export default async function OficinasPage() {
                       {countryNames[office.country]} · {office.currency}
                     </p>
                     <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
-                      {office.plan === 'monthly' ? 'Mensual' : 'Trimestral'}
+                      Plan {office.plan === 'monthly' ? 'mensual' : 'trimestral'}
                     </p>
                   </div>
                   <span style={{
@@ -96,61 +122,11 @@ export default async function OficinasPage() {
                     borderRadius: 99, padding: '3px 10px',
                     fontSize: 11, fontWeight: 700,
                   }}>
-                    {office.status === 'active' ? 'Activa' : office.status === 'frozen' ? 'Congelada' : 'Inactiva'}
+                    {office.status === 'active' ? '✅ Activa' : office.status === 'frozen' ? '❄️ Congelada' : '⚫ Inactiva'}
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {office.status === 'active' ? (
-                    <form action={async () => {
-                      'use server'
-                      await freezeOffice(office.id)
-                    }} style={{ flex: 1 }}>
-                      <button type="submit" style={{
-                        width: '100%',
-                        background: 'rgba(99,102,241,0.1)',
-                        border: '1px solid rgba(99,102,241,0.2)',
-                        borderRadius: 12, padding: '10px 0',
-                        color: 'var(--info)', fontSize: 13,
-                        fontWeight: 600, cursor: 'pointer',
-                      }}>
-                        ❄️ Congelar
-                      </button>
-                    </form>
-                  ) : office.status === 'frozen' ? (
-                    <form action={async () => {
-                      'use server'
-                      await activateOffice(office.id)
-                    }} style={{ flex: 1 }}>
-                      <button type="submit" style={{
-                        width: '100%',
-                        background: 'rgba(16,185,129,0.1)',
-                        border: '1px solid rgba(16,185,129,0.2)',
-                        borderRadius: 12, padding: '10px 0',
-                        color: 'var(--success)', fontSize: 13,
-                        fontWeight: 600, cursor: 'pointer',
-                      }}>
-                        ✅ Activar
-                      </button>
-                    </form>
-                  ) : null}
-
-                  <form action={async () => {
-                    'use server'
-                    await deleteOffice(office.id)
-                  }} style={{ flex: 1 }}>
-                    <button type="submit" style={{
-                      width: '100%',
-                      background: 'var(--danger-dim)',
-                      border: '1px solid rgba(239,68,68,0.2)',
-                      borderRadius: 12, padding: '10px 0',
-                      color: 'var(--danger)', fontSize: 13,
-                      fontWeight: 600, cursor: 'pointer',
-                    }}>
-                      Eliminar
-                    </button>
-                  </form>
-                </div>
+                <OficinaActions office={office} />
               </div>
             ))}
           </div>

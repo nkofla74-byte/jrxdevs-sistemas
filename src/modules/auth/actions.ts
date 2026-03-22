@@ -102,3 +102,38 @@ export async function logout() {
   revalidatePath('/', 'layout')
   redirect('/login')
 }
+
+// =============================================
+// RESETEAR DEVICE BINDING DE RUTA
+// =============================================
+export async function resetRouteDevice(routeId: string) {
+  const supabase = createClient()
+
+  const { data: route } = await supabase
+    .from('routes')
+    .select('cobrador_id, name')
+    .eq('id', routeId)
+    .single()
+
+  if (!route?.cobrador_id) return { error: 'Sin cobrador asignado.' }
+
+  const { error } = await supabase
+    .from('users')
+    .update({ device_id: null })
+    .eq('id', route.cobrador_id)
+
+  if (error) return { error: 'Error al resetear el dispositivo.' }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  await supabase.from('audit_logs').insert({
+    user_id: user?.id,
+    action: 'DEVICE_RESETEADO',
+    entity: 'routes',
+    entity_id: routeId,
+    data_after: { route: route.name },
+  })
+
+  revalidatePath(`/superadmin/rutas/${routeId}`)
+  revalidatePath('/admin')
+  return { success: true }
+}

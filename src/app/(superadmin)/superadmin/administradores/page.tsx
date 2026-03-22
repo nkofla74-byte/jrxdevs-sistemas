@@ -1,7 +1,7 @@
 import { getAllAdmins } from '@/modules/auth/admin-actions'
-import { toggleAdminStatus, deleteAdmin } from '@/modules/auth/admin-actions'
 import Link from 'next/link'
 import PageHeader from '@/components/shared/PageHeader'
+import AdminActions from '@/components/superadmin/AdminActions'
 
 const countryFlags: Record<string, string> = {
   CO: '🇨🇴', PE: '🇵🇪', EC: '🇪🇨', BR: '🇧🇷',
@@ -34,6 +34,29 @@ export default async function AdministradoresPage() {
           </p>
         </div>
 
+        {/* Leyenda */}
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 16, padding: 14,
+          marginBottom: 20,
+          display: 'flex', flexDirection: 'column', gap: 6,
+        }}>
+          <p style={{
+            color: 'var(--text-muted)', fontSize: 11,
+            fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.08em', marginBottom: 4,
+          }}>
+            Guía de estados
+          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+            ✅ <strong style={{ color: 'var(--success)' }}>Activo</strong> — Puede acceder a su panel normalmente
+          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+            🔒 <strong style={{ color: 'var(--danger)' }}>Bloqueado</strong> — No puede entrar al sistema. Sus datos se conservan.
+          </p>
+        </div>
+
         {error && (
           <div style={{
             background: 'var(--danger-dim)',
@@ -49,19 +72,22 @@ export default async function AdministradoresPage() {
             {admins.map((admin: any) => (
               <div key={admin.id} style={{
                 background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
+                border: `1px solid ${admin.status === 'blocked' ? 'rgba(239,68,68,0.2)' : 'var(--border)'}`,
                 borderRadius: 20, padding: 16,
               }}>
-                {/* Info del admin */}
                 <div className="flex items-center gap-3" style={{ marginBottom: 12 }}>
                   <div style={{
                     width: 44, height: 44, borderRadius: 14, flexShrink: 0,
-                    background: 'var(--gradient-primary)',
-                    boxShadow: '0 0 10px var(--neon-glow)',
+                    background: admin.status === 'blocked'
+                      ? 'var(--danger-dim)'
+                      : 'var(--gradient-primary)',
+                    boxShadow: admin.status === 'blocked'
+                      ? 'none'
+                      : '0 0 10px var(--neon-glow)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 18, color: 'white' }}>
-                      {admin.full_name.charAt(0).toUpperCase()}
+                      {admin.status === 'blocked' ? '🔒' : admin.full_name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -84,53 +110,25 @@ export default async function AdministradoresPage() {
                         : '⚠️ Sin oficina'}
                     </p>
                   </div>
-                  {/* Badge estado */}
                   <span style={{
                     flexShrink: 0,
-                    background: admin.status === 'active' ? 'rgba(16,185,129,0.15)' : 'var(--danger-dim)',
-                    color: admin.status === 'active' ? 'var(--success)' : 'var(--danger)',
-                    border: `1px solid ${admin.status === 'active' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                    background: admin.status === 'active'
+                      ? 'rgba(16,185,129,0.15)'
+                      : 'var(--danger-dim)',
+                    color: admin.status === 'active'
+                      ? 'var(--success)'
+                      : 'var(--danger)',
+                    border: `1px solid ${admin.status === 'active'
+                      ? 'rgba(16,185,129,0.3)'
+                      : 'rgba(239,68,68,0.3)'}`,
                     borderRadius: 99, padding: '3px 10px',
                     fontSize: 11, fontWeight: 700,
                   }}>
-                    {admin.status === 'active' ? 'Activo' : 'Bloqueado'}
+                    {admin.status === 'active' ? '✅ Activo' : '🔒 Bloqueado'}
                   </span>
                 </div>
 
-                {/* Botones de acción */}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <form action={async () => {
-                    'use server'
-                    await toggleAdminStatus(admin.id, admin.status)
-                  }} style={{ flex: 1 }}>
-                    <button type="submit" style={{
-                      width: '100%',
-                      background: admin.status === 'active' ? 'var(--danger-dim)' : 'var(--success-dim)',
-                      border: `1px solid ${admin.status === 'active' ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}`,
-                      borderRadius: 12, padding: '10px 0',
-                      color: admin.status === 'active' ? 'var(--danger)' : 'var(--success)',
-                      fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    }}>
-                      {admin.status === 'active' ? 'Bloquear' : 'Activar'}
-                    </button>
-                  </form>
-
-                  <form action={async () => {
-                    'use server'
-                    await deleteAdmin(admin.id)
-                  }} style={{ flex: 1 }}>
-                    <button type="submit" style={{
-                      width: '100%',
-                      background: 'var(--danger-dim)',
-                      border: '1px solid rgba(239,68,68,0.2)',
-                      borderRadius: 12, padding: '10px 0',
-                      color: 'var(--danger)',
-                      fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    }}>
-                      Eliminar
-                    </button>
-                  </form>
-                </div>
+                <AdminActions admin={admin} />
               </div>
             ))}
           </div>
