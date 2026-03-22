@@ -6,14 +6,3 @@
     }
   ]
 }
-```
-
-Guarda el archivo.
-
----
-
-**Paso 4 — Agregar la variable en Vercel**
-
-Cuando hagas el deploy en Vercel ve a **Settings → Environment Variables** y agrega:
-```
-CRON_SECRET = jrxdevs_cron_2026
