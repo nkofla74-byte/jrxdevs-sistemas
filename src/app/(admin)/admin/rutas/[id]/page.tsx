@@ -2,6 +2,7 @@ import { getRouteDashboard } from '@/modules/offices/admin-actions'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ResetDeviceButton from '@/components/shared/ResetDeviceButton'
+import CobradorLocationButton from '@/components/admin/CobradorLocationButton'
 
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat('es-CO', {
@@ -73,7 +74,6 @@ export default async function AdminRouteDashboard({
 
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '16px 16px 40px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-        {/* Alertas */}
         {criticalClients > 0 && (
           <div style={{
             background: 'var(--danger-dim)',
@@ -102,11 +102,7 @@ export default async function AdminRouteDashboard({
           </div>
         )}
 
-        {/* Métricas */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr',
-          gap: 10,
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {[
             { label: 'Capital inyectado', value: formatCurrency(capitalInjected, currency), color: 'var(--text-primary)', icon: '🏦' },
             { label: 'Dinero en calle', value: formatCurrency(totalInStreet, currency), color: 'var(--neon-bright)', icon: '💰' },
@@ -134,7 +130,7 @@ export default async function AdminRouteDashboard({
           ))}
         </div>
 
-        {/* Acciones rápidas */}
+        {/* Acciones de la ruta */}
         <div style={{
           background: 'var(--bg-card)',
           border: '1px solid var(--border)',
@@ -146,10 +142,7 @@ export default async function AdminRouteDashboard({
           }}>
             Acciones de la ruta
           </p>
-          <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr',
-            gap: 10, marginBottom: 12,
-          }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
             {[
               { icon: '👥', label: 'Ver clientes', href: `/admin/clientes?ruta=${route.id}` },
               { icon: '💳', label: 'Ver créditos', href: `/admin/creditos?ruta=${route.id}` },
@@ -173,9 +166,26 @@ export default async function AdminRouteDashboard({
               </Link>
             ))}
           </div>
-
-          {/* Botón autorizar dispositivo */}
           <ResetDeviceButton routeId={route.id} routeName={route.name} />
+        </div>
+
+        {/* Ubicación en tiempo real */}
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px solid rgba(99,102,241,0.2)',
+          borderRadius: 20, padding: 20,
+        }}>
+          <p style={{
+            fontFamily: 'Syne', fontWeight: 700, fontSize: 15,
+            color: 'var(--text-primary)', marginBottom: 8,
+          }}>
+            📍 Ubicación en tiempo real
+          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16, lineHeight: 1.6 }}>
+            Consulta dónde está el cobrador en este momento.
+            La ubicación se actualiza cada 30 segundos automáticamente.
+          </p>
+          <CobradorLocationButton routeId={route.id} routeName={route.name} />
         </div>
 
       </div>

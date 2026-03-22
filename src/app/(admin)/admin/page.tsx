@@ -267,6 +267,8 @@ export default async function AdminDashboard() {
               { icon: '💳', label: 'Créditos', href: '/admin/creditos' },
               { icon: '💰', label: 'Capital', href: '/admin/capital' },
               { icon: '📊', label: 'Cierres', href: '/admin/cierres' },
+              { icon: '⚙️', label: 'Configuración', href: '/admin/configuracion' },
+
             ].map((action) => (
               <Link key={action.label} href={action.href}
                 className="action-card"

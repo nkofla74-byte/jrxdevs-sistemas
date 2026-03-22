@@ -5,7 +5,6 @@ import EnrutarClient from '@/components/cobrador/EnrutarClient'
 
 export default async function EnrutarPage() {
   const supabase = createClient()
-
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -15,7 +14,6 @@ export default async function EnrutarPage() {
     .eq('cobrador_id', user.id)
     .is('deleted_at', null)
     .single()
-
   if (!route) redirect('/cobrador')
 
   const today = new Date().toISOString().split('T')[0]
@@ -42,25 +40,41 @@ export default async function EnrutarPage() {
   const paidClientIds = new Set(todayPayments?.map((p) => p.client_id) ?? [])
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
-
-      <header className="bg-gray-900 border-b border-gray-800 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/cobrador" className="text-gray-400 text-sm">← Atrás</Link>
-            <span className="text-gray-600">/</span>
-            <span className="text-white font-semibold text-sm">Enrutar clientes</span>
+    <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      <header style={{
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border)',
+        padding: '12px 16px',
+        position: 'sticky', top: 0, zIndex: 50,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Link href="/cobrador" style={{
+              color: 'var(--text-muted)', fontSize: 13,
+              textDecoration: 'none', fontWeight: 600,
+            }}>
+              ← Atrás
+            </Link>
+            <span style={{ color: 'var(--border)' }}>|</span>
+            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
+              🗺️ Enrutar clientes
+            </span>
           </div>
-          <span className="text-gray-400 text-xs">{route.name}</span>
+          <span style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 99, padding: '3px 10px',
+            color: 'var(--text-muted)', fontSize: 11, fontWeight: 600,
+          }}>
+            {route.name}
+          </span>
         </div>
       </header>
-
       <EnrutarClient
         clients={clients ?? []}
         paidClientIds={Array.from(paidClientIds)}
         routeId={route.id}
       />
-
     </main>
   )
 }

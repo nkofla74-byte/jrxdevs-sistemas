@@ -188,3 +188,44 @@ export async function getRouteDashboard(routeId: string) {
     },
   }
 }
+
+// =============================================
+// ACTUALIZAR HORARIO DE OPERACIÓN
+// =============================================
+export async function updateOfficeSchedule(openTime: string, closeTime: string) {
+  const supabase = createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autenticado.' }
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('tenant_id')
+    .eq('id', user.id)
+    .single()
+
+  if (!userData?.tenant_id) return { error: 'Sin oficina asignada.' }
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({
+      open_time: openTime,
+      close_time: closeTime,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', userData.tenant_id)
+
+  if (error) return { error: 'Error al actualizar el horario.' }
+
+  await supabase.from('audit_logs').insert({
+    tenant_id: userData.tenant_id,
+    user_id: user.id,
+    action: 'HORARIO_ACTUALIZADO',
+    entity: 'tenants',
+    entity_id: userData.tenant_id,
+    data_after: { open_time: openTime, close_time: closeTime },
+  })
+
+  revalidatePath('/admin/configuracion')
+  return { success: true }
+}

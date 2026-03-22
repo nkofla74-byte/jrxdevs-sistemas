@@ -22,15 +22,16 @@ export default function EnrutarClient({
   const [orderedClients, setOrderedClients] = useState(clients)
   const [isSaving, setIsSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [inputValue, setInputValue] = useState('')
   const router = useRouter()
   const paidSet = new Set(paidClientIds)
+  const hasChanges = JSON.stringify(orderedClients.map(c => c.id)) !== JSON.stringify(clients.map(c => c.id))
 
   function moveUp(index: number) {
     if (index === 0) return
     const newList = [...orderedClients]
-    const temp = newList[index - 1]
-    newList[index - 1] = newList[index]
-    newList[index] = temp
+    ;[newList[index - 1], newList[index]] = [newList[index], newList[index - 1]]
     setOrderedClients(newList)
     setSaved(false)
   }
@@ -38,11 +39,23 @@ export default function EnrutarClient({
   function moveDown(index: number) {
     if (index === orderedClients.length - 1) return
     const newList = [...orderedClients]
-    const temp = newList[index]
-    newList[index] = newList[index + 1]
-    newList[index + 1] = temp
+    ;[newList[index], newList[index + 1]] = [newList[index + 1], newList[index]]
     setOrderedClients(newList)
     setSaved(false)
+  }
+
+  function moveToPosition(clientId: string, newPosition: number) {
+    const total = orderedClients.length
+    if (newPosition < 1 || newPosition > total) return
+    const currentIndex = orderedClients.findIndex(c => c.id === clientId)
+    if (currentIndex === -1) return
+    const newList = [...orderedClients]
+    const [removed] = newList.splice(currentIndex, 1)
+    newList.splice(newPosition - 1, 0, removed)
+    setOrderedClients(newList)
+    setSaved(false)
+    setEditingId(null)
+    setInputValue('')
   }
 
   async function saveOrder() {
@@ -60,99 +73,259 @@ export default function EnrutarClient({
   }
 
   return (
-    <div className="px-4 py-4 pb-8">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-gray-400 text-sm">{orderedClients.length} clientes</p>
+    <div style={{ padding: '16px 16px 100px', background: 'var(--bg-primary)', minHeight: '100vh' }}>
+
+      {/* Header info + botón guardar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+          {orderedClients.length} clientes
+        </p>
         <button
           onClick={saveOrder}
-          disabled={isSaving || saved}
-          className={`text-sm font-semibold px-4 py-2 rounded-xl transition ${
-            saved
-              ? 'bg-green-500/20 text-green-400 border border-green-500/20'
-              : 'bg-indigo-600 hover:bg-indigo-500 text-white'
-          }`}
+          disabled={isSaving || saved || !hasChanges}
+          style={{
+            background: saved
+              ? 'rgba(16,185,129,0.15)'
+              : hasChanges
+              ? 'var(--gradient-primary)'
+              : 'var(--bg-card)',
+            border: saved
+              ? '1px solid rgba(16,185,129,0.3)'
+              : hasChanges
+              ? 'none'
+              : '1px solid var(--border)',
+            borderRadius: 12,
+            padding: '10px 20px',
+            color: saved ? 'var(--success)' : hasChanges ? 'white' : 'var(--text-muted)',
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: isSaving || saved || !hasChanges ? 'not-allowed' : 'pointer',
+            opacity: isSaving ? 0.7 : 1,
+            transition: 'all 0.2s',
+          }}
         >
-          {isSaving ? 'Guardando...' : saved ? 'Guardado' : 'Guardar orden'}
+          {isSaving ? '💾 Guardando...' : saved ? '✅ Guardado' : '💾 Guardar orden'}
         </button>
       </div>
 
-      <div className="space-y-2">
+      {/* Aviso si hay cambios sin guardar */}
+      {hasChanges && !saved && (
+        <div style={{
+          background: 'rgba(245,158,11,0.1)',
+          border: '1px solid rgba(245,158,11,0.2)',
+          borderRadius: 12, padding: '10px 14px',
+          marginBottom: 12,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span style={{ fontSize: 14 }}>⚠️</span>
+          <p style={{ color: 'var(--warning)', fontSize: 12, fontWeight: 600 }}>
+            Tienes cambios sin guardar
+          </p>
+        </div>
+      )}
+
+      {/* Lista de clientes */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {orderedClients.map((client, index) => {
           const paid = paidSet.has(client.id)
           const activeCredit = client.credits?.find((c: any) =>
             ['ACTIVE', 'CURRENT', 'WATCH', 'WARNING', 'CRITICAL'].includes(c.status)
           )
+          const isEditing = editingId === client.id
+
           return (
-            <div
-              key={client.id}
-              className={`rounded-2xl border transition ${
-                paid ? 'bg-green-500/10 border-green-500/20' : 'bg-gray-900 border-gray-800'
-              }`}
-            >
-              <div className="flex items-center gap-3 p-3">
-                <div className="flex flex-col gap-1">
+            <div key={client.id} style={{
+              background: paid ? 'rgba(16,185,129,0.08)' : 'var(--bg-card)',
+              border: `1px solid ${paid ? 'rgba(16,185,129,0.25)' : 'var(--border)'}`,
+              borderRadius: 18,
+              overflow: 'hidden',
+              transition: 'all 0.2s',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px' }}>
+
+                {/* Flechas arriba/abajo */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
                   <button
                     onClick={() => moveUp(index)}
                     disabled={index === 0}
-                    className="w-7 h-7 rounded-lg bg-gray-800 disabled:opacity-30 flex items-center justify-center text-gray-400 hover:bg-gray-700 transition text-xs"
+                    style={{
+                      width: 30, height: 30, borderRadius: 8,
+                      background: index === 0 ? 'var(--bg-secondary)' : 'rgba(139,92,246,0.15)',
+                      border: `1px solid ${index === 0 ? 'var(--border)' : 'rgba(139,92,246,0.3)'}`,
+                      color: index === 0 ? 'var(--text-muted)' : 'var(--neon-bright)',
+                      fontSize: 14, cursor: index === 0 ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: index === 0 ? 0.3 : 1,
+                      transition: 'all 0.15s',
+                    }}
                   >
-                    u
+                    ↑
                   </button>
                   <button
                     onClick={() => moveDown(index)}
                     disabled={index === orderedClients.length - 1}
-                    className="w-7 h-7 rounded-lg bg-gray-800 disabled:opacity-30 flex items-center justify-center text-gray-400 hover:bg-gray-700 transition text-xs"
+                    style={{
+                      width: 30, height: 30, borderRadius: 8,
+                      background: index === orderedClients.length - 1 ? 'var(--bg-secondary)' : 'rgba(139,92,246,0.15)',
+                      border: `1px solid ${index === orderedClients.length - 1 ? 'var(--border)' : 'rgba(139,92,246,0.3)'}`,
+                      color: index === orderedClients.length - 1 ? 'var(--text-muted)' : 'var(--neon-bright)',
+                      fontSize: 14, cursor: index === orderedClients.length - 1 ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: index === orderedClients.length - 1 ? 0.3 : 1,
+                      transition: 'all 0.15s',
+                    }}
                   >
-                    d
+                    ↓
                   </button>
                 </div>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                  paid ? 'bg-green-500/20 text-green-400' : 'bg-gray-800 text-gray-400'
-                }`}>
+
+                {/* Número de posición — click para editar */}
+                <button
+                  onClick={() => {
+                    setEditingId(isEditing ? null : client.id)
+                    setInputValue(String(index + 1))
+                  }}
+                  style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: isEditing
+                      ? 'rgba(139,92,246,0.3)'
+                      : paid ? 'rgba(16,185,129,0.2)' : 'var(--bg-secondary)',
+                    border: isEditing
+                      ? '1px solid rgba(139,92,246,0.6)'
+                      : paid ? '1px solid rgba(16,185,129,0.3)' : '1px solid var(--border)',
+                    color: paid ? 'var(--success)' : 'var(--neon-bright)',
+                    fontFamily: 'DM Mono', fontWeight: 800, fontSize: 14,
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                  title="Toca para mover a posición específica"
+                >
                   {index + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className={`font-semibold text-sm truncate ${paid ? 'text-green-400' : 'text-white'}`}>
+                </button>
+
+                {/* Info del cliente */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <p style={{
+                      fontWeight: 600, fontSize: 14,
+                      color: paid ? 'var(--success)' : 'var(--text-primary)',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
                       {client.full_name}
                     </p>
                     {activeCredit && (
-                      <span className="text-xs flex-shrink-0">{creditStatusEmoji[activeCredit.status]}</span>
+                      <span style={{ fontSize: 12, flexShrink: 0 }}>
+                        {creditStatusEmoji[activeCredit.status]}
+                      </span>
+                    )}
+                    {paid && (
+                      <span style={{
+                        background: 'rgba(16,185,129,0.15)',
+                        border: '1px solid rgba(16,185,129,0.3)',
+                        borderRadius: 99, padding: '1px 7px',
+                        color: 'var(--success)', fontSize: 10, fontWeight: 700, flexShrink: 0,
+                      }}>✓</span>
                     )}
                   </div>
-                  <p className="text-gray-500 text-xs truncate">{client.address}</p>
-                  {activeCredit && (
-                    <p className="text-gray-400 text-xs">
-                  Cuota: {Number(activeCredit.installment_amount).toFixed(0)}                    </p>
-                  )}
+                  <p style={{ color: 'var(--text-muted)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {client.address}
+                  </p>
                 </div>
-                <div className="flex flex-col gap-1 flex-shrink-0">
-                  <Link
-                    href={`/cobrador/cliente/${client.id}`}
-                    className="text-xs bg-indigo-600/20 text-indigo-400 px-2 py-1 rounded-lg border border-indigo-500/20 text-center"
-                  >
+
+                {/* Botones ver / mapa */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+                  <Link href={`/cobrador/cliente/${client.id}`} style={{
+                    background: 'rgba(99,102,241,0.15)',
+                    border: '1px solid rgba(99,102,241,0.25)',
+                    borderRadius: 8, padding: '4px 10px',
+                    color: 'var(--info)', fontSize: 11, fontWeight: 700,
+                    textDecoration: 'none', textAlign: 'center',
+                  }}>
                     Ver
                   </Link>
                   {client.latitude && client.longitude && (
-                    <Link
-                      href={`https://maps.google.com?q=${client.latitude},${client.longitude}`}
-                      target="_blank"
-                      className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded-lg text-center"
-                    >
-                      mapa
-                    </Link>
+                    <a href={`https://maps.google.com?q=${client.latitude},${client.longitude}`} target="_blank" style={{
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 8, padding: '4px 10px',
+                      color: 'var(--text-muted)', fontSize: 11,
+                      textDecoration: 'none', textAlign: 'center',
+                    }}>
+                      📍
+                    </a>
                   )}
                 </div>
               </div>
+
+              {/* Input de posición manual — aparece al tocar el número */}
+              {isEditing && (
+                <div style={{
+                  borderTop: '1px solid var(--border)',
+                  padding: '12px 14px',
+                  background: 'rgba(139,92,246,0.05)',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 12, flexShrink: 0 }}>
+                    Mover a posición:
+                  </p>
+                  <input
+                    type="number"
+                    min={1}
+                    max={orderedClients.length}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    autoFocus
+                    style={{
+                      width: 70, background: 'var(--bg-secondary)',
+                      border: '1px solid rgba(139,92,246,0.4)',
+                      borderRadius: 8, padding: '6px 10px',
+                      color: 'var(--text-primary)', fontSize: 14,
+                      fontFamily: 'DM Mono', fontWeight: 700,
+                      textAlign: 'center',
+                    }}
+                  />
+                  <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                    de {orderedClients.length}
+                  </p>
+                  <button
+                    onClick={() => moveToPosition(client.id, parseInt(inputValue))}
+                    disabled={!inputValue || parseInt(inputValue) < 1 || parseInt(inputValue) > orderedClients.length}
+                    style={{
+                      background: 'var(--gradient-primary)',
+                      border: 'none', borderRadius: 8,
+                      padding: '6px 14px',
+                      color: 'white', fontSize: 12, fontWeight: 700,
+                      cursor: 'pointer', marginLeft: 'auto',
+                    }}
+                  >
+                    Mover
+                  </button>
+                  <button
+                    onClick={() => { setEditingId(null); setInputValue('') }}
+                    style={{
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 8, padding: '6px 10px',
+                      color: 'var(--text-muted)', fontSize: 12,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
             </div>
           )
         })}
       </div>
 
       {orderedClients.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-4xl mb-3">mapa</p>
-          <p className="text-gray-400 text-sm">No hay clientes activos en esta ruta.</p>
+        <div style={{
+          background: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 20, padding: 40, textAlign: 'center', marginTop: 20,
+        }}>
+          <p style={{ fontSize: 36, marginBottom: 8 }}>🗺️</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No hay clientes activos en esta ruta.</p>
         </div>
       )}
     </div>
