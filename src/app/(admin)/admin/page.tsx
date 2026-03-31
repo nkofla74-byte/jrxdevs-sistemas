@@ -2,6 +2,7 @@ import { getOfficeDashboard } from '@/modules/offices/admin-actions'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ThemeToggle from '@/components/shared/ThemeToggle'
+import TutorialModal from '@/components/shared/TutorialModal'
 
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat('es-CO', {
@@ -85,7 +86,7 @@ export default async function AdminDashboard() {
             }}>
               {adminName}
             </p>
-            <ThemeToggle />
+            <div className="flex items-center gap-2"><TutorialModal role="admin" /><ThemeToggle /></div>
             <form action="/api/auth/logout" method="POST">
               <button style={{
                 background: 'var(--danger-dim)',
