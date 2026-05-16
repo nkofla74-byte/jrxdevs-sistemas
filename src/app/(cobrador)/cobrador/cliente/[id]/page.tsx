@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { getClientById } from '@/modules/clients/actions'
+import { getPaymentsByCredit } from '@/modules/payments/actions'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import PaymentForm from '@/components/shared/PaymentForm'
 import RefinanceForm from '@/components/cobrador/RefinanceForm'
+import PaymentHistoryModal from '@/components/cobrador/PaymentHistoryModal'
 
 const statusColor: Record<string, string> = {
   ACTIVE:'rgba(16,185,129,0.15)',CURRENT:'rgba(16,185,129,0.15)',
@@ -64,6 +66,14 @@ export default async function CobradorClientePage({
     .eq('payment_date', today)
     .is('deleted_at', null)
     .single()
+
+  const paymentsMap: Record<string, any[]> = {}
+  await Promise.all(
+    activeCredits.map(async (credit: any) => {
+      const { data } = await getPaymentsByCredit(credit.id)
+      paymentsMap[credit.id] = data ?? []
+    })
+  )
 
   return (
     <main className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
@@ -230,6 +240,11 @@ export default async function CobradorClientePage({
                   </div>
                 )}
               </div>
+
+              <PaymentHistoryModal
+                credit={credit}
+                payments={paymentsMap[credit.id] ?? []}
+              />
 
               <PaymentForm creditId={credit.id} clientId={c.id} routeId={c.route_id} installmentAmount={Number(credit.installment_amount)} />
 
